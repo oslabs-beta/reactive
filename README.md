@@ -1,65 +1,89 @@
-# reactive2 README
+# React Visualizer VS Code Extension
 
-This is the README for your extension "reactive2". After writing up a brief description, we recommend including the following sections.
+## Overview
+
+**React Visualizer** is a powerful VS Code extension designed to enhance the development experience for React applications. Developed as part of the OSLabs program, this tool provides a comprehensive visual representation of your React component structure, making it easier to understand and navigate React projects. This extension is especially useful for teams transitioning from class-based components to functional components, as well as from JavaScript to TypeScript.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **Component Tree Visualization**: Get a clear, hierarchical view of your React component structure.
+- **Component Type Differentiation**: Easily distinguish between functional and class components.
+- **Language Identification**: Quickly identify TypeScript and JavaScript components.
+- **Full App Structure**: Visualize the entire structure of your React application.
+- **State Inspection** *(Planned Feature)*: View and track component state in real-time.
 
-For example if there is an image subfolder under your extension project workspace:
+### Stretch Goals
 
-\!\[feature X\]\(images/feature-x.png\)
+- **State Updates**: Inspect and monitor component state within the tree structure.
+TODO ANIMATIONS  
+-***Tip:*** Many popular extensions utilize animations to showcase their features. Consider adding short, focused animations demonstrating the component tree visualization.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Installation
 
-## Requirements
+1. Open VS Code.
+2. Go to the Extensions view (`Ctrl+Shift+X`).
+3. Search for "React Visualizer".
+4. Click **Install**.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## Usage
 
-## Extension Settings
+1. Open a React project in VS Code.
+2. Access the React Visualizer from the VS Code sidebar.
+3. Click on components in the tree to navigate to their source code.
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Technologies Used
 
-For example:
+- VS Code Extension API
+- React
+- TypeScript/JavaScript
+TODO
+- [Other technologies or libraries]
 
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Contributing
+TODO
+We welcome contributions! Please see our [CONTRIBUTING.md](link-to-contributing.md) for details on how to get started.
 
 ## Known Issues
+TODO
+1. **
+2. **
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Please report any additional issues on our [GitHub repository] https://github.com/oslabs-beta/reactive.
 
-## Release Notes
+## Development Team
 
-Users appreciate release notes as you update your extension.
+| Name          | Role                    | GitHub                        | Email                   |
+| ------------- | -------------------     | ----------------------------- | ----------------------- |
+| Colin Rooney  | Full Stack Developer    | @github/12mv2                 | captaincolinr@gmail.com |
+| Developer 2   | Backend Developer       | [@github_handle](github-link) | developer2@email.com    |
+| Developer 3   | Full Stack Developer    | [@github_handle](github-link) | developer3@email.com    |
 
-### 1.0.0
+## Support
 
-Initial release of ...
+If you encounter any issues or have feature requests, please file an issue on our GitHub repository Reactive, https://github.com/oslabs-beta/reactive.
 
-### 1.0.1
+## OSLabs
 
-Fixed issue #.
+**React Visualizer** is a project developed through OSLabs, a nonprofit tech accelerator focused on advancing open-source software and fostering innovation in the tech industry. OSLabs is dedicated to supporting engineers and leaders building high-impact, collaborative open-source tools.
 
-### 1.1.0
+**OSLabs' Mission**:
+OSLabs is devoted to furthering open-source innovation by supporting engineering talent in creating developer tools that contribute to the software engineering community and industry as a whole.
 
-Added features X, Y, and Z.
+For more information about OSLabs:
+- Visit: [OSLabs Website](https://opensourcelabs.io)
+- Email: hello@opensourcelabs.io
+- Phone: (601) 207-4517
+
+### OSLabs Programs
+
+- **Engineering Fellowship**: A paid 6-month program where engineers create and oversee open-source dev tool projects.
+- **Beta Program**: A 3-month initiative where participants receive mentorship to build their open-source skills.
+- **Hackathons**: Co-hosted hackathons with open-source-focused organizations.
+
+## Acknowledgements
+
+This project was developed as part of the OSLabs program. We'd like to thank OSLabs for their support and resources.
 
 ---
 
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+Happy coding with **React Visualizer**!

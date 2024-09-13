@@ -12,14 +12,16 @@
   "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "reactive2.helloWorld",
-      "title": "Hello World"
-    }, 
-    {
-      "command": "reactive2.makeComponentTree",
-      "title": "Make Component Tree"
-    }]
+    "commands": [
+      {
+        "command": "reactive2.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "reactive2.makeComponentTree",
+        "title": "Make Component Tree"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",
@@ -27,11 +29,15 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.93.0",
     "@types/mocha": "^10.0.7",
     "@types/node": "20.x",
-    "eslint": "^9.9.1",
+    "@types/vscode": "^1.93.0",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.9.1"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.25.6",
+    "@babel/traverse": "^7.25.6"
   }
 }
