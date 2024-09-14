@@ -1,10 +1,11 @@
 import globals from "globals";
 
 export default [{
-    files: ["**/*.js"],
+    files: ["**/*.js", "**/*.jsx" ],
     languageOptions: {
         globals: {
             ...globals.commonjs,
+            ...globals.es2021,
             ...globals.node,
             ...globals.mocha,
         },
