@@ -14,37 +14,10 @@ const vscode = require('vscode');
  */
 
 function activate(context) {
-	let disposable = vscode.commands.registerCommand('reactive2.makeComponentTree', async () => {
-	  const options = {
-		canSelectMany: false,
-		openLabel: 'Select the parent component for your app',
-		filters: {
-		  'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
-		}
-	  };
-	  const fileUri = await vscode.window.showOpenDialog(options);
-	  if (fileUri && fileUri[0]) {
-		const filePath = fileUri[0].fsPath;
-		const baseDir = path.dirname(filePath);
-		const tree = buildComponentTree(filePath, baseDir);
-		vscode.window.showInformationMessage(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
 
-
-		// Display the React Component Tree in output channel / migrating to webViewPanel
-		const outputChannel = vscode.window.createOutputChannel('Reacy Component Tree');
-		outputChannel.appendLine(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
-		outputChannel.show();	
-	  }
-	});
-
-context.subscriptions.push(disposable);
-}
-
-// function activate(context) {
-
-// 	// Use the console to output diagnostic information (console.log) and errors (console.error)
-// 	// This line of code will only be executed once when your extension is activated
-// 	console.log('Congratulations, your extension "reactive2" is now active!');
+	// Use the console to output diagnostic information (console.log) and errors (console.error)
+	// This line of code will only be executed once when your extension is activated
+	console.log('Congratulations, your extension "reactive2" is now active!');
 
 // 	// The command has been defined in the package.json file
 // 	// Now provide the implementation of the command with  registerCommand
@@ -71,8 +44,40 @@ context.subscriptions.push(disposable);
 // 			vscode.window.showInformationMessage('React Component Tree displayed in the output channel');
 // 		});
 		
-// 	context.subscriptions.push(disposable2);
-// }
+	context.subscriptions.push(disposable2);
+
+	const webview = vscode.commands.registerCommand('reactive2.renderReact', function () {
+		const seedData = {
+			"Parent": {
+				"Child": {
+					"Functional": false,
+					"Class": true,
+				},
+				"Functional": true,
+				"Class": false,
+					
+				}
+			}
+		let panel = vscode.window.createWebviewPanel("webviewTest", "React", vscode.ViewColumn.One, {
+            enableScripts: true
+        })
+
+		let scriptSrc = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "index.js"))
+
+		panel.webview.html = `<!DOCTYPE html>
+        <html lang="en">
+          <head>
+          </head>
+          <body>
+            <noscript>You need to enable JavaScript to run this app.</noscript>
+            <div id="root"></div>
+            <script src="${scriptSrc}"></script>
+          </body>
+        </html>
+        `
+	})
+	context.subscriptions.push(webview);
+}
 
 // This method is called when your extension is deactivated
 function deactivate() {}
