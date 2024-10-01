@@ -71,8 +71,40 @@ context.subscriptions.push(disposable);
 // 			vscode.window.showInformationMessage('React Component Tree displayed in the output channel');
 // 		});
 		
-// 	context.subscriptions.push(disposable2);
-// }
+	context.subscriptions.push(disposable2);
+
+	const webview = vscode.commands.registerCommand('reactive2.renderReact', function () {
+		const seedData = {
+			"Parent": {
+				"Child": {
+					"Functional": false,
+					"Class": true,
+				},
+				"Functional": true,
+				"Class": false,
+					
+				}
+			}
+		let panel = vscode.window.createWebviewPanel("webviewTest", "React", vscode.ViewColumn.One, {
+            enableScripts: true
+        })
+
+		let scriptSrc = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "index.js"))
+
+		panel.webview.html = `<!DOCTYPE html>
+        <html lang="en">
+          <head>
+          </head>
+          <body>
+            <noscript>You need to enable JavaScript to run this app.</noscript>
+            <div id="root"></div>
+            <script src="${scriptSrc}"></script>
+          </body>
+        </html>
+        `
+	})
+	context.subscriptions.push(webview);
+}
 
 // This method is called when your extension is deactivated
 function deactivate() {}
