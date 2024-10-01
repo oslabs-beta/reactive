@@ -17,7 +17,7 @@ function activate(context) {
 	let disposable = vscode.commands.registerCommand('reactive2.makeComponentTree', async () => {
 	  const options = {
 		canSelectMany: false,
-		openLabel: 'Select the parent component for your app',
+		openLabel: 'Select topmost parent component',
 		filters: {
 		  'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
 		}
@@ -31,7 +31,7 @@ function activate(context) {
 
 
 		// Display the React Component Tree in output channel / migrating to webViewPanel
-		const outputChannel = vscode.window.createOutputChannel('Reacy Component Tree');
+		const outputChannel = vscode.window.createOutputChannel('React Component Tree');
 		outputChannel.appendLine(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
 		outputChannel.show();	
 	  }
