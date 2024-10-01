@@ -13,7 +13,7 @@ const vscode = require('vscode');
  * @param {vscode.ExtensionContext} context
  */
 
-function activate(context) {
+const activate = (context: vscode.ExtensionContext): void => {
 	let disposable = vscode.commands.registerCommand('reactive2.makeComponentTree', async () => {
 	  const options = {
 		canSelectMany: false,
