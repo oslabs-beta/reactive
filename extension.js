@@ -38,7 +38,7 @@ function activate(context) {
 	});
 
 context.subscriptions.push(disposable);
-}
+//}
 
 // function activate(context) {
 
@@ -71,7 +71,7 @@ context.subscriptions.push(disposable);
 // 			vscode.window.showInformationMessage('React Component Tree displayed in the output channel');
 // 		});
 		
-	context.subscriptions.push(disposable2);
+	//context.subscriptions.push(disposable2);
 
 	const webview = vscode.commands.registerCommand('reactive2.renderReact', function () {
 		const seedData = {
