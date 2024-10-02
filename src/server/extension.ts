@@ -1,3 +1,5 @@
+import { DisposableOptions } from "../types";
+
 const path = require ('path') 
 // from parser.js
 const { buildComponentTree } = require('./parser');
@@ -13,15 +15,15 @@ const vscode = require('vscode');
  * @param {vscode.ExtensionContext} context
  */
 
-function activate(context) {
+const activate = (context: vscode.ExtensionContext): void => {
 	let disposable = vscode.commands.registerCommand('reactive2.makeComponentTree', async () => {
-	  const options = {
+	  const options: DisposableOptions = {
 		canSelectMany: false,
 		openLabel: 'Select topmost parent component',
 		filters: {
 		  'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
 		}
-	  };
+	  };;
 	  const fileUri = await vscode.window.showOpenDialog(options);
 	  if (fileUri && fileUri[0]) {
 		const filePath = fileUri[0].fsPath;
