@@ -14,10 +14,37 @@ const vscode = require('vscode');
  */
 
 function activate(context) {
+	let disposable = vscode.commands.registerCommand('reactive2.makeComponentTree', async () => {
+	  const options = {
+		canSelectMany: false,
+		openLabel: 'Select topmost parent component',
+		filters: {
+		  'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
+		}
+	  };
+	  const fileUri = await vscode.window.showOpenDialog(options);
+	  if (fileUri && fileUri[0]) {
+		const filePath = fileUri[0].fsPath;
+		const baseDir = path.dirname(filePath);
+		const tree = buildComponentTree(filePath, baseDir);
+		vscode.window.showInformationMessage(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "reactive2" is now active!');
+
+		// Display the React Component Tree in output channel / migrating to webViewPanel
+		const outputChannel = vscode.window.createOutputChannel('React Component Tree');
+		outputChannel.appendLine(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
+		outputChannel.show();	
+	  }
+	});
+
+context.subscriptions.push(disposable);
+//}
+
+// function activate(context) {
+
+// 	// Use the console to output diagnostic information (console.log) and errors (console.error)
+// 	// This line of code will only be executed once when your extension is activated
+// 	console.log('Congratulations, your extension "reactive2" is now active!');
 
 // 	// The command has been defined in the package.json file
 // 	// Now provide the implementation of the command with  registerCommand
@@ -44,7 +71,7 @@ function activate(context) {
 // 			vscode.window.showInformationMessage('React Component Tree displayed in the output channel');
 // 		});
 		
-	context.subscriptions.push(disposable2);
+	//context.subscriptions.push(disposable2);
 
 	const webview = vscode.commands.registerCommand('reactive2.renderReact', function () {
 		const seedData = {
