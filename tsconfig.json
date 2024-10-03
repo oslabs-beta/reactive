@@ -4,5 +4,5 @@
         "noImplicitAny": true,
         "esModuleInterop": true,
     },
-    "include": ["src/**/*"]
+    "include": ["src/**/*", "src/server/extension.js", "src/server/parser.js", "src/client/index.js"]
   }
