@@ -1,103 +1,107 @@
 const fs = require('fs');
 const path = require('path');
 const parser = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
+const { traverse, NodePath } = require('@babel/traverse').default;
+const { File, Identifier, CallExpression } = require('@babel/types');
+const {TreeObject} = require('./types')
 
-// Helper function to read files and parse the AST
-function parseFileToAST(filePath) {
+// Helper function to read files and parse to an AST for babel traverse
+function parseFileToAST(filePath: string): File | null {
+
+  //edge case
   if (!fs.existsSync(filePath)) {
     console.error(`File does not exist: ${filePath}`);
     return null;
   }
+
+  //read source code and return contents as a string
   const code = fs.readFileSync(filePath, 'utf-8');
-  
+
+  //translate the returned string into an abstract syntax tree -- an AST is an object full of nested objects where each object is a node
   return parser.parse(code, {
-    sourceType: 'module', // ECMAScript module
+    sourceType: 'module', // source code is written in ECMAScript module format
     plugins: ['jsx'],     // Enable JSX support
   });
 }
 
-// Helper function to get component type (class or function)
-// function getComponentType(node) {
-//   if (node.type === 'ClassDeclaration') return 'class';
-//   if (node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') return 'functional';
-//   return 'unknown';
-// }
 
 // Helper function to get component name from an AST node
-function getComponentName(node) {
+function getComponentName(node: typeof NodePath) {
   if (node.id && node.id.name) return node.id.name;  // For function or class components
   if (node.declaration && node.declaration.id) return node.declaration.id.name;  // For export default
   return null;
 }
 
 // Traverse the AST and determine the component type (class or functional)
-function findComponentTypeAndState(ast) {
-  let type = null;
-  const stateVariables = [];
+function findComponentTypeAndState(ast: File): { type: 'class' | 'functional' | null; stateVariables: string[] }  {
+  let type: 'class' | 'functional' | null = null;
+  const stateVariables: string[] = [];
 
+  //traverse recursively moves through the AST and checks each node type  
   traverse(ast, {
     // Check for class component
-    ClassDeclaration(path) {
-      const componentName = getComponentName(path.node);
+    ClassDeclaration(path: typeof NodePath) {
+      const componentName = getComponentName(path.node); //line 29
       if (componentName) {
         type = 'class';  // Mark it as a class component
       }
     },
+
     // Check for functional component
-    FunctionDeclaration(path) {
-      const componentName = getComponentName(path.node);
+    FunctionDeclaration(path: typeof NodePath) {
+      const componentName = getComponentName(path.node); //line 29
       if (componentName) {
         type = 'functional';  // Mark it as a functional component
       }
     },
+
     // Check for arrow functional component
-    VariableDeclaration(path) {
+    VariableDeclaration(path: typeof NodePath) {
       const declaration = path.node.declarations[0];
-      if (declaration && declaration.init && declaration.init.type === 'ArrowFunctionExpression') {
+      if (declaration.init.type === 'ArrowFunctionExpression') {
         const componentName = declaration.id.name;
         if (componentName) {
           type = 'functional';  // Mark it as a functional component
         }
       }
     },
-    // Parse for state data
-    // CallExpression(path) {
-    //    if (path.node.callee.name === 'useState') {
-    //     const [stateVar, setter] = path.node.arguments;
-    //     if (stateVar && stateVar.type === 'ArrayPattern') {
-    //        stateVar.elements.forEach(element => {
-    //         if (element.type === 'Identifier') {
-    //            // Ignore setter functions, include only state variables
-    //            /*if (!element.name.startsWith('set')) {*/
-    //             stateVariables.push(element.name);
-    //            //}
-    //         }
-    //        });
-    //     }  
-    //    }
-    // }
+
+    VariableDeclarator(path: typeof NodePath) {
+      //const result = {};
+        if (path.node.init.callee.name === 'useState'){
+          stateVariables.push(path.node.id.elements[0].name)
+      };
+      // const initializedState = path.node.init.arguments[0];
+  
+      // // Iterate through the properties of the ObjectExpression
+      // initializedState.properties.forEach((prop: typeof NodePath) => {
+      //   if (prop.type === 'ObjectProperty') {
+      //     const k: string = prop.key.name; // Get the property name
+      //     const v: string | number = prop.value.value; // Get the property value
+      //     result.k = v; // Assign to the result object
+      //   }
+      // });
+      //return result; 
+    },
   });
 
   return {type, stateVariables };
 }
 
 // Parse the imports to identify child components
-function findImportsInAST(ast) {
-  const imports = [];
+function findImportsInAST(ast: File): string[] {
+  const imports: string[] = [];
 
   if (!ast) return imports;
 
   traverse(ast, {
-    ImportDeclaration(path) {
+    ImportDeclaration(path: typeof NodePath) {
       const importedFilePath = path.node.source.value;
       
-      // Skip external libraries like React, ReactDOM, etc.
-      if (!importedFilePath.startsWith('.') && !importedFilePath.startsWith('/')) {
-        return;  // This is an external dependency, not a local file
+      // only inlcude files imported locally
+      if (importedFilePath.startsWith('.') || importedFilePath.startsWith('/')) {
+        imports.push(importedFilePath);
       }
-      
-      imports.push(importedFilePath);
     }
   });
 
@@ -105,7 +109,7 @@ function findImportsInAST(ast) {
 }
 
 // Build a component tree from the file system and source code
-function buildComponentTree(filePath, baseDir) {
+function buildComponentTree(filePath: string, baseDir: string): typeof TreeObject | null {
   const absoluteFilePath = path.resolve(baseDir, filePath);
 
   if (!fs.existsSync(absoluteFilePath)) {
@@ -113,13 +117,13 @@ function buildComponentTree(filePath, baseDir) {
     return null;
   }
 
-  const ast = parseFileToAST(absoluteFilePath);
+  const ast = parseFileToAST(absoluteFilePath); // line 9
   
   // Determine the component type (functional or class)
-  const {type, stateVariables } = findComponentTypeAndState(ast);
+  const {type, stateVariables } = findComponentTypeAndState(ast); //line 36
   
   // Find imports to identify child components
-  const imports = findImportsInAST(ast);
+  const imports = findImportsInAST(ast); //line 92
 
   const children = imports
     .map((importPath) => {
@@ -133,22 +137,15 @@ function buildComponentTree(filePath, baseDir) {
 
       return buildComponentTree(resolvedImportPath, baseDir);
     })
-    .filter(Boolean); // Remove any null values
+    .filter((child): child is typeof TreeObject => Boolean(child)); // Remove any null values
 
   // Return just the file name and the component type
   return {
     file: path.basename(filePath),  // Return the file name instead of full path
-    //type:,  // Return the component type (class or functional)
-    //state: stateVariables,
-    children: children.filter(Boolean), // Remove any invalid entries
+    type: type,  // Return the component type (class or functional)
+    state: stateVariables,
+    children: children // Remove any invalid entries
   };
 }
 
 module.exports = { buildComponentTree };
-
-// Example usage:
-// const baseDir = './client';  // The base directory containing your components
-// const entryFile = './src/components/App.jsx';  // The entry point of your component tree
-
-// const tree = buildComponentTree(entryFile, baseDir);
-// console.log(JSON.stringify(tree, null, 2));

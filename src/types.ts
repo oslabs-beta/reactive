@@ -10,5 +10,7 @@ export type FiltersObject = {
 
 export type TreeObject = {
     file: string;
-    children: TreeObject;
+    type: 'class' | 'functional' | null;
+    state: string[];
+    children: TreeObject[];
 }
