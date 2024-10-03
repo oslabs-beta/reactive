@@ -1,4 +1,4 @@
-import { DisposableOptions } from "../types";
+import { DisposableOptions, TreeObject } from "../types";
 
 const path = require ('path') 
 // from parser.js
@@ -23,12 +23,12 @@ const activate = (context: vscode.ExtensionContext): void => {
 		filters: {
 		  'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
 		}
-	  };;
+	  };
 	  const fileUri = await vscode.window.showOpenDialog(options);
 	  if (fileUri && fileUri[0]) {
-		const filePath = fileUri[0].fsPath;
-		const baseDir = path.dirname(filePath);
-		const tree = buildComponentTree(filePath, baseDir);
+		const filePath: string = fileUri[0].fsPath;
+		const baseDir: string = path.dirname(filePath);
+		const tree: TreeObject = buildComponentTree(filePath, baseDir);
 		vscode.window.showInformationMessage(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
 
 
