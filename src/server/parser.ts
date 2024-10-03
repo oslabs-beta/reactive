@@ -68,7 +68,7 @@ function findComponentTypeAndState(ast: File): { type: 'class' | 'functional' | 
 
     VariableDeclarator(path: typeof NodePath) {
       //const result = {};
-        if (path.node.init.callee.name === 'useState'){
+        if (path.node && path.node.init && path.node.init.callee && path.node.init.callee.name === 'useState'){
           stateVariables.push(path.node.id.elements[0].name)
       };
       // const initializedState = path.node.init.arguments[0];
