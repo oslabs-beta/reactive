@@ -138,7 +138,7 @@ function buildComponentTree(filePath, baseDir) {
   // Return just the file name and the component type
   return {
     file: path.basename(filePath),  // Return the file name instead of full path
-    type,  // Return the component type (class or functional)
+    //type:,  // Return the component type (class or functional)
     //state: stateVariables,
     children: children.filter(Boolean), // Remove any invalid entries
   };
