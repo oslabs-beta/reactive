@@ -24,6 +24,10 @@
       {
         "command": "reactive2.renderReact",
         "title": "Render React Tree"
+      }, 
+      {
+        "command": "catCoding.start",
+        "title": "Cat Coding"
       }
     ]
   },

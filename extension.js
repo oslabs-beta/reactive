@@ -17,7 +17,7 @@ function activate(context) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "reactive2" is now active!');
+	// console.log('Congratulations, your extension "reactive2" is now active!');
 
 // 	// The command has been defined in the package.json file
 // 	// Now provide the implementation of the command with  registerCommand
@@ -44,7 +44,7 @@ function activate(context) {
 // 			vscode.window.showInformationMessage('React Component Tree displayed in the output channel');
 // 		});
 		
-	context.subscriptions.push(disposable2);
+// 	context.subscriptions.push(disposable2);
 
 	const webview = vscode.commands.registerCommand('reactive2.renderReact', function () {
 		const seedData = {
@@ -59,10 +59,10 @@ function activate(context) {
 				}
 			}
 		let panel = vscode.window.createWebviewPanel("webviewTest", "React", vscode.ViewColumn.One, {
-            enableScripts: true
-        })
+            // enableScripts: true
+        });
 
-		let scriptSrc = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "index.js"))
+		let scriptSrc = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "index.js"));
 
 		panel.webview.html = `<!DOCTYPE html>
         <html lang="en">
@@ -77,6 +77,33 @@ function activate(context) {
         `
 	})
 	context.subscriptions.push(webview);
+
+	const webviewCat = vscode.commands.registerCommand('catCoding.start', () => {
+		// Create and show panel
+		const panel = vscode.window.createWebviewPanel(
+		  'catCoding',
+		  'Cat Coding',
+		  vscode.ViewColumn.One,
+		  {}
+		);
+  
+		// And set its HTML content
+		panel.webview.html = getWebviewContent();
+	});
+	context.subscriptions.push(webviewCat);
+}
+function getWebviewContent() {
+	return `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+	  <meta charset="UTF-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>Cat Coding</title>
+  </head>
+  <body>
+	  <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300" />
+  </body>
+  </html>`;
 }
 
 // This method is called when your extension is deactivated
