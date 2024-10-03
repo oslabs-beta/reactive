@@ -5,5 +5,10 @@ export type DisposableOptions = {
 }
 
 export type FiltersObject = {
-    'Accepted Files': string[] 
+    'Accepted Files': string[]; 
+}
+
+export type TreeObject = {
+    file: string;
+    children: TreeObject;
 }

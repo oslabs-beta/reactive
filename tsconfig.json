@@ -1,8 +1,8 @@
-{
-    "compilerOptions": {
-        "module": "commonjs",
-        "noImplicitAny": true,
-        "esModuleInterop": true,
-    },
-    "include": ["src/**/*"]
-  }
+// {
+//     "compilerOptions": {
+//         "module": "commonjs",
+//         "noImplicitAny": true,
+//         "esModuleInterop": true,
+//     },
+//     "include": ["src/**/*", "src/server/extension.js", "src/server/parser.js", "src/client/index.js"]
+//   }
