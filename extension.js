@@ -59,7 +59,7 @@ function activate(context) {
 				}
 			}
 		let panel = vscode.window.createWebviewPanel("webviewTest", "React", vscode.ViewColumn.One, {
-            // enableScripts: true
+            enableScripts: true
         });
 
 		let scriptSrc = panel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, "index.js"));
@@ -78,33 +78,54 @@ function activate(context) {
 	})
 	context.subscriptions.push(webview);
 
-	const webviewCat = vscode.commands.registerCommand('catCoding.start', () => {
+	const webviewObj = vscode.commands.registerCommand('reactive2.parserObj', async () => {
+		const options = {
+			canSelectMany: false,
+			openLabel: 'Select topmost parent component',
+			filters: {
+			  'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
+			}
+		};
+		const fileUri = await vscode.window.showOpenDialog(options);
+		if (fileUri && fileUri[0]) {
+			const filePath = fileUri[0].fsPath;
+			const baseDir = path.dirname(filePath);
+			const tree = buildComponentTree(filePath, baseDir);
+			vscode.window.showInformationMessage(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
+	
 		// Create and show panel
 		const panel = vscode.window.createWebviewPanel(
-		  'catCoding',
-		  'Cat Coding',
+		  'parserObj',
+		  'Parser Obj',
 		  vscode.ViewColumn.One,
 		  {}
 		);
   
 		// And set its HTML content
 		panel.webview.html = getWebviewContent();
+		function getWebviewContent() {
+			return `<!DOCTYPE html>
+		  <html lang="en">
+		  <head>
+			  <meta charset="UTF-8">
+			  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+			  <title>Cat Coding</title>
+		  </head>
+		  <body>
+			<p>
+			  Component Tree: ${JSON.stringify(tree, null, 2)}
+			</p>
+		  </body>
+		  </html>`;
+		}
+		}
+	
 	});
-	context.subscriptions.push(webviewCat);
+
+	context.subscriptions.push(webviewObj);
 }
-function getWebviewContent() {
-	return `<!DOCTYPE html>
-  <html lang="en">
-  <head>
-	  <meta charset="UTF-8">
-	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	  <title>Cat Coding</title>
-  </head>
-  <body>
-	  <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300" />
-  </body>
-  </html>`;
-}
+
+
 
 // This method is called when your extension is deactivated
 function deactivate() {}
