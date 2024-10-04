@@ -71,17 +71,25 @@ function findComponentTypeAndState(ast: File): { type: 'class' | 'functional' | 
         if (path.node && path.node.init && path.node.init.callee && path.node.init.callee.name === 'useState'){
           stateVariables.push(path.node.id.elements[0].name)
       };
-      // const initializedState = path.node.init.arguments[0];
   
-      // // Iterate through the properties of the ObjectExpression
-      // initializedState.properties.forEach((prop: typeof NodePath) => {
-      //   if (prop.type === 'ObjectProperty') {
-      //     const k: string = prop.key.name; // Get the property name
-      //     const v: string | number = prop.value.value; // Get the property value
-      //     result.k = v; // Assign to the result object
-      //   }
-      // });
-      //return result; 
+            // const initializedState = path.node.init.arguments[0];
+            // //stateVariables.push(initializedState)
+            // if (initializedState.value) {
+            //   stateVariables.push(initializedState.value)
+            // }
+    
+            // Iterate through the properties of the ObjectExpression
+            // initializedState.properties.forEach((prop) => {
+            //   if (prop.type === 'ObjectProperty') {
+            //     const k = prop.key.name; // Get the property name
+            //     const v = prop.value.value; // Get the property value
+            //     result.k = v; // Assign to the result object
+            //   }
+            // });
+            //stateVariables.push(results); 
+          //};
+        
+      //},
     },
   });
 
