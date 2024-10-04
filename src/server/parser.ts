@@ -15,7 +15,7 @@ function parseFileToAST(filePath: string): File | null {
   }
 
   //read source code and return contents as a string
-  const code = fs.readFileSync(filePath, 'utf-8');
+  const code: string = fs.readFileSync(filePath, 'utf-8');
 
   //translate the returned string into an abstract syntax tree -- an AST is an object full of nested objects where each object is a node
   return parser.parse(code, {
@@ -41,7 +41,7 @@ function findComponentTypeAndState(ast: File): { type: 'class' | 'functional' | 
   traverse(ast, {
     // Check for class component
     ClassDeclaration(path: typeof NodePath) {
-      const componentName = getComponentName(path.node); //line 29
+      const componentName: string = getComponentName(path.node); //line 29
       if (componentName) {
         type = 'class';  // Mark it as a class component
       }
@@ -49,7 +49,7 @@ function findComponentTypeAndState(ast: File): { type: 'class' | 'functional' | 
 
     // Check for functional component
     FunctionDeclaration(path: typeof NodePath) {
-      const componentName = getComponentName(path.node); //line 29
+      const componentName: string = getComponentName(path.node); //line 29
       if (componentName) {
         type = 'functional';  // Mark it as a functional component
       }
@@ -58,8 +58,8 @@ function findComponentTypeAndState(ast: File): { type: 'class' | 'functional' | 
     // Check for arrow functional component
     VariableDeclaration(path: typeof NodePath) {
       const declaration = path.node.declarations[0];
-      if (declaration.init.type === 'ArrowFunctionExpression') {
-        const componentName = declaration.id.name;
+      if (declaration && declaration.init && declaration.init.type === 'ArrowFunctionExpression') {
+        const componentName: string = declaration.id.name;
         if (componentName) {
           type = 'functional';  // Mark it as a functional component
         }
@@ -96,7 +96,7 @@ function findImportsInAST(ast: File): string[] {
 
   traverse(ast, {
     ImportDeclaration(path: typeof NodePath) {
-      const importedFilePath = path.node.source.value;
+      const importedFilePath: string = path.node.source.value;
       
       // only inlcude files imported locally
       if (importedFilePath.startsWith('.') || importedFilePath.startsWith('/')) {
@@ -110,7 +110,7 @@ function findImportsInAST(ast: File): string[] {
 
 // Build a component tree from the file system and source code
 function buildComponentTree(filePath: string, baseDir: string): typeof TreeObject | null {
-  const absoluteFilePath = path.resolve(baseDir, filePath);
+  const absoluteFilePath: string = path.resolve(baseDir, filePath);
 
   if (!fs.existsSync(absoluteFilePath)) {
     console.error(`File does not exist: ${absoluteFilePath}`);
@@ -123,12 +123,11 @@ function buildComponentTree(filePath: string, baseDir: string): typeof TreeObjec
   const {type, stateVariables } = findComponentTypeAndState(ast); //line 36
   
   // Find imports to identify child components
-  const imports = findImportsInAST(ast); //line 92
+  const imports: string[] = findImportsInAST(ast); //line 92
 
   const children = imports
     .map((importPath) => {
-      // Resolve relative import path to an actual file
-      const resolvedImportPath = path.resolve(path.dirname(absoluteFilePath), `${importPath}.jsx`);
+      const resolvedImportPath: string = path.resolve(path.dirname(absoluteFilePath), `${importPath}.jsx`);
       
       if (!fs.existsSync(resolvedImportPath)) {
         console.warn(`Warning: Imported file not found: ${resolvedImportPath}`);

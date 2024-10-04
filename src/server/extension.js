@@ -1,6 +1,6 @@
 // const path = require ('path') 
 // // from parser.js
-// const { buildComponentTree } = require('./parser.js');
+// const { buildComponentTree } = require('./parser.ts');
 // // The module 'vscode' contains the VS Code extensibility API
 // // Import the module and reference it with the alias vscode in your code below
 // // Note: we are requiring the vscode library 
