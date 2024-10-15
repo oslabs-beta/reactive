@@ -1,3 +1,5 @@
+
+// // PREVIOUS CODE LEFT TO COMPARE AGAINST NEW FOR UNDERSTANDING
 // const path = require('path');
 // const { buildComponentTree } = require('./parser.js');
 // const vscode = require('vscode');
