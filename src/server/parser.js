@@ -136,15 +136,17 @@ function buildComponentTree(filePath, baseDir) {
     .filter(Boolean); // Remove any null values
 
   // Return just the file name and the component type
-  return {
+  const tree = {
     file: path.basename(filePath),  // Return the file name instead of full path
-    //type:,  // Return the component type (class or functional)
-    //state: stateVariables,
+    type: type,  // Return the component type (class or functional)
+    state: stateVariables,
     children: children.filter(Boolean), // Remove any invalid entries
-  };
+  }
+  
+  return tree;
 }
 
-module.exports = { buildComponentTree };
+module.exports = { buildComponentTree, tree };
 
 // Example usage:
 // const baseDir = './client';  // The base directory containing your components
