@@ -1,15 +1,13 @@
-const { useMemo } = require('react');
-const { tree } = require('./parser.js');
-const d3 = require('d3');
+import * as d3 from 'd3';
 
-const componentTree = tree
+function renderDendrogram(componentTree) {
 
-// Set dimensions and margins for the SVG
+// Set dimensions and margins for the Scalable Vector Graphic
 const width = 800;
 const height = 600;
 const margin = {top: 20, right: 120, bottom: 20, left: 120};
 
-// Append SVG to the body (or wherever you want to insert the visualization)
+// Append SVG to the body
 const svg = d3.select("body")
     .append("svg")
     .attr("width", width + margin.right + margin.left)
@@ -17,7 +15,7 @@ const svg = d3.select("body")
   .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-// Create a hierarchical structure from your component tree JSON
+// Create a hierarchical structure from component tree
 const root = d3.hierarchy(componentTree);
 
 // Define the D3 tree layout
@@ -52,4 +50,6 @@ node.append("text")
     .attr("x", d => d.children ? -10 : 10)
     .attr("text-anchor", d => d.children ? "end" : "start")
     .text(d => d.data.name);
+}
 
+export default { renderDendrogram };

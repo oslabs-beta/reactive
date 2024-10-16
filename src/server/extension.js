@@ -65,10 +65,11 @@
 // // // Import the module and reference it with the alias vscode in your code below
 // // // Note: we are requiring the vscode library 
 
-const path = require('path');
-const fs = require('fs');
-const { buildComponentTree } = require('./parser.js');
-const vscode = require('vscode');
+import path from 'path';
+import fs from 'fs';
+import buildComponentTree from './parser.js';
+import renderDendrogram from './dendrogram.js'
+import vscode from 'vscode'
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -88,17 +89,34 @@ function activate(context) {
 			const filePath = fileUri[0].fsPath;
 			const baseDir = path.dirname(filePath);
 			const tree = buildComponentTree(filePath, baseDir);
+			const dendro = renderDendrogram(tree);
 
 			// Display the React Component Tree in output channel
 			const outputChannel = vscode.window.createOutputChannel('React Component Tree');
-			outputChannel.appendLine(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
+			outputChannel.appendLine(`Component Tree: ${dendro}`);
 			outputChannel.show();
 		}
 	});
 
 	context.subscriptions.push(makeComponentTree);
 
-	const renderReact = vscode.commands.registerCommand('reactive2.renderReact', () => {
+	const renderReact = vscode.commands.registerCommand('reactive2.renderReact', async () => {
+		const options = {
+			canSelectMany: false,
+			openLabel: 'Select topmost parent component',
+			filters: {
+				'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
+			}
+		};
+
+		const fileUri = await vscode.window.showOpenDialog(options);
+
+		if (fileUri && fileUri[0]) {
+			const filePath = fileUri[0].fsPath;
+			const baseDir = path.dirname(filePath);
+			const tree = buildComponentTree(filePath, baseDir);
+			const dendro = renderDendrogram(tree);
+
 		const panel = vscode.window.createWebviewPanel(
 			'reactWebview',
 			'React App',
@@ -107,11 +125,12 @@ function activate(context) {
 				enableScripts: true
 			}
 		);
-
+	
 		const htmlPath = path.join(context.extensionPath, 'src', 'webview', 'index.html');
 		const htmlContent = fs.readFileSync(htmlPath, 'utf-8');
 
 		panel.webview.html = htmlContent;
+		};
 	});
 
 	context.subscriptions.push(renderReact);
@@ -119,7 +138,7 @@ function activate(context) {
 
 function deactivate() {}
 
-module.exports = {
+export default {
 	activate,
-	deactivate
+	deactivate,
 };
