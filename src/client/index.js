@@ -1,10 +1,10 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from '../components/App.jsx';
+// import React from 'react';
+// import { createRoot } from 'react-dom/client';
+// import App from '../webview/App.jsx';
 
-const container = document.getElementById('app');
-const root = createRoot(container);
+// const container = document.getElementById('app');
+// const root = createRoot(container);
 
-root.render(
-  <App />
-);
+// root.render(
+//   <App />
+// );
