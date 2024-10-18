@@ -38,20 +38,27 @@ function activate(context) {
     const webviewJsPath = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'));
     const webviewJsUri = panel.webview.asWebviewUri(webviewJsPath);
 
-    panel.webview.html = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>React App</title>
-      </head>
-      <body>
-        <div id="root"></div>
-        <script src="${webviewJsUri}"></script>
-      </body>
-      </html>
-    `;
+	panel.webview.html = `
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+	  <meta charset="UTF-8">
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	  <title>React Component Tree</title>
+	  <style>
+		body {
+		  font-family: Arial, sans-serif;
+		  margin: 0;
+		  padding: 0;
+		}
+	  </style>
+	</head>
+	<body>
+	  <div id="root"></div>
+	  <script src="${webviewJsUri}"></script>
+	</body>
+	</html>
+  `;
   });
 
   const buildAndRenderComponentTree = vscode.commands.registerCommand('reactive.reactWebviewTree', async () => {
