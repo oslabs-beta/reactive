@@ -1,23 +1,23 @@
-// TODO for micah to build out
+// TODO for Micah to build out
 
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 
 const dummyData = {
-  name: "Root",
+  name: "Colin",
   children: [
     {
-      name: "Child 1",
+      name: "T Rex monster",
       children: [
-        { name: "Grandchild 1.1" },
-        { name: "Grandchild 1.2" }
+        { name: "TBD 1.1" },
+        { name: "TBD 1.2" }
       ]
     },
     {
-      name: "Child 2",
+      name: "Gizmo",
       children: [
-        { name: "Grandchild 2.1" },
-        { name: "Grandchild 2.2" }
+        { name: "Stripe" },
+        { name: "MoHawk" }
       ]
     }
   ]
