@@ -14,12 +14,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "reactive2.makeComponentTree",
-        "title": "Make Component Tree"
-      },
-      {
         "command": "reactive2.renderReact",
         "title": "Render React Tree"
+      },
+      {
+        "command": "reactive2.makeComponentTree",
+        "title": "Make Component Tree"
       },
       {
         "command": "reactive.reactWebviewTree",
