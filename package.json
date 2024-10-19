@@ -14,10 +14,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "reactive.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "reactive2.makeComponentTree",
         "title": "Make Component Tree"
       },
