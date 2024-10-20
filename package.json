@@ -29,10 +29,11 @@
   },
   "scripts": {
     "build": "webpack",
-    "lint": "eslint .",
+    "lint": "eslint . --ext .js,.ts,.tsx",
     "compile": "tsc -p ./",
     "pretest": "npm run compile && npm run lint",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "test:jest": "jest"
     
   },
   "devDependencies": {
