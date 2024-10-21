@@ -28,10 +28,10 @@
     ]
   },
   "scripts": {
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./tsconfig.json",
     "webpack": "webpack",
     "build": "npm run compile && npm run webpack",
-    "lint": "eslint . --ext .js,.ts,.tsx,jsx",
+    "lint": "eslint . --ext .js,.ts,.tsx,.jsx",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./out/test/runTest.js",
     "test:jest": "jest"
