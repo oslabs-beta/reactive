@@ -28,9 +28,10 @@
     ]
   },
   "scripts": {
-    "build": "webpack",
-    "lint": "eslint . --ext .js,.ts,.tsx",
     "compile": "tsc -p ./",
+    "webpack": "webpack",
+    "build": "npm run compile && npm run webpack",
+    "lint": "eslint . --ext .js,.ts,.tsx,jsx",
     "pretest": "npm run compile && npm run lint",
     "test": "node ./out/test/runTest.js",
     "test:jest": "jest"
