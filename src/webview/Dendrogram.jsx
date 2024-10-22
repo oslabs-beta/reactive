@@ -2,26 +2,10 @@
 
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
+//import { treeObj } from '../server/extension' with {type: json}
 
-const dummyData = {
-  name: "Colin",
-  children: [
-    {
-      name: "T Rex monster",
-      children: [
-        { name: "TBD 1.1" },
-        { name: "TBD 1.2" }
-      ]
-    },
-    {
-      name: "Gizmo",
-      children: [
-        { name: "Stripe" },
-        { name: "MoHawk" }
-      ]
-    }
-  ]
-};
+const treeO = treeObj;
+console.log(treeO)
 
 const Dendrogram = () => {
   const svgRef = useRef();
@@ -33,7 +17,7 @@ const Dendrogram = () => {
       const height = 400;
 
       const tree = d3.tree().size([height, width - 100]);
-      const root = d3.hierarchy(dummyData);
+      const root = d3.hierarchy(treeO);
       const links = tree(root).links();
       const nodes = root.descendants();
 

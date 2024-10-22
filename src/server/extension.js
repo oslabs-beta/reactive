@@ -2,18 +2,40 @@ const vscode = require('vscode');
 const path = require('path');
 const { buildComponentTree } = require('./parser.js');
 
+let treeObj;
+
 // Activate the extension, setting up command listeners
 function activate(context) {
+
   
   /**
    * Render the React application in a Webview.
    * This function creates a new Webview panel and displays an HTML page
    * that loads a React app script from the extension's dist folder.
    */
-  const renderReact = vscode.commands.registerCommand('reactive2.renderReact', () => {
+  const renderReact = vscode.commands.registerCommand('reactive2.renderReact', async () => {
+	let appName = ""
+	const options = {
+		canSelectMany: false,
+		openLabel: 'Select topmost parent component',
+		filters: {
+		  'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
+		}
+	  };
+
+	const fileUri = await vscode.window.showOpenDialog(options);
+	if (fileUri && fileUri[0]) {
+		const filePath = fileUri[0].fsPath;
+		const baseDir = path.dirname(filePath);
+		appName = path.parse(filePath).base;
+		const tree = buildComponentTree(filePath, baseDir);
+		treeObj = JSON.stringify(tree, null, 2)
+	}
+	
+
     const panel = vscode.window.createWebviewPanel(
       'reactWebview',            // Internal identifier for the webview
-      'React App',               // Title of the webview panel
+      `Component Tree Built From ${appName}`,               // Title of the webview panel
       vscode.ViewColumn.One,     // Column to show the webview in
       {
         enableScripts: true,     // Allow JavaScript execution in the webview
@@ -172,5 +194,6 @@ function deactivate() {}
 
 module.exports = {
   activate,
-  deactivate
+  deactivate,
+  treeObj
 };
