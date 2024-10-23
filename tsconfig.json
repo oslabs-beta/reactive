@@ -3,14 +3,20 @@
     "module": "commonjs",
     "target": "ES2020",
     "allowJs": true,
-    "lib": ["ES2020"],
+    "jsx": "react", 
+    "lib": ["ES2021"],
     "sourceMap": true,
     "strict": true,
     "rootDir": "src",
-    "outDir": "out"
+    "outDir": "out",
+    "types": ["node", "mocha", "vscode"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noImplicitAny": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "test/**/*"
   ],
   "exclude": [
     "node_modules",

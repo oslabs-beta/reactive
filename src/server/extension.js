@@ -10,7 +10,7 @@ function activate(context) {
    * This function creates a new Webview panel and displays an HTML page
    * that loads a React app script from the extension's dist folder.
    */
-  const renderReact = vscode.commands.registerCommand('reactive2.renderReact', () => {
+  const renderReact = vscode.commands.registerCommand('reactive.renderReact', () => {
     const panel = vscode.window.createWebviewPanel(
       'reactWebview',            // Internal identifier for the webview
       'React App',               // Title of the webview panel
@@ -86,7 +86,7 @@ function activate(context) {
    * Display the React component tree in the Output channel.
    * Prompts the user to select a file, builds the component tree, and displays it in the VSCode Output panel.
    */
-  const makeComponentTree = vscode.commands.registerCommand('reactive2.makeComponentTree', async () => {
+  const makeComponentTree = vscode.commands.registerCommand('reactive.makeComponentTree', async () => {
     const options = {
       canSelectMany: false,
       openLabel: 'Select topmost parent component',

@@ -15,21 +15,7 @@ module.exports = [
       vscode: 'commonjs vscode',
     },
     resolve: {
-      extensions: ['.js'],
-    },
-    module: {
-      rules: [
-        {
-          test: /\.(js|jsx)$/,
-          exclude: /node_modules/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              presets: ['@babel/env', '@babel/react'],
-            },
-          },
-        },
-      ],
+      extensions: ['.js', '.ts'],
     },
   },
   {
@@ -42,7 +28,7 @@ module.exports = [
       filename: 'webview.js',
     },
     resolve: {
-      extensions: ['.js', '.jsx'],
+      extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
     module: {
       rules: [
