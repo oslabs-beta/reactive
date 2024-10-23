@@ -6,7 +6,9 @@ const App = () => {
   return (
     <div>
       <h1>React Component Tree</h1>
-      <Dendrogram />
+        <div>
+          <Dendrogram />
+        </div>
     </div>
   );
 };
