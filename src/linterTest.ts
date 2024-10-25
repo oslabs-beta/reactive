@@ -4,3 +4,5 @@ function unusedFunction(unusedParam: any) {
   }
   
   export const x = 1;
+
+  // REACTIVE/src/linterTests.ts

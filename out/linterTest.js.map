@@ -1,1 +1,1 @@
-{"version":3,"file":"linterTest.js","sourceRoot":"","sources":["../src/linterTest.ts"],"names":[],"mappings":";;;AAAA,SAAS,cAAc,CAAC,WAAgB;IACpC,IAAI,cAAc,GAAG,CAAC,CAAC;IACvB,OAAO,EAAE,CAAC;AACZ,CAAC;AAEY,QAAA,CAAC,GAAG,CAAC,CAAC"}
+{"version":3,"file":"linterTest.js","sourceRoot":"","sources":["../src/linterTest.ts"],"names":[],"mappings":";;;AAAA,SAAS,cAAc,CAAC,WAAgB;IACpC,IAAI,cAAc,GAAG,CAAC,CAAC;IACvB,OAAO,EAAE,CAAC;AACZ,CAAC;AAEY,QAAA,CAAC,GAAG,CAAC,CAAC;AAEnB,8BAA8B"}
