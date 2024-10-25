@@ -1,8 +1,24 @@
-// {
-//     "compilerOptions": {
-//         "module": "commonjs",
-//         "noImplicitAny": true,
-//         "esModuleInterop": true,
-//     },
-//     "include": ["src/**/*", "src/server/extension.js", "src/server/parser.js", "src/client/index.js"]
-//   }
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2020",
+    "allowJs": true,
+    "jsx": "react", 
+    "lib": ["ES2021"],
+    "sourceMap": true,
+    "strict": true,
+    "rootDir": "src",
+    "outDir": "out",
+    "types": ["node", "mocha", "vscode"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "noImplicitAny": true
+  },
+  "include": [
+    "src/**/*",
+  ],
+  "exclude": [
+    "node_modules",
+    ".vscode-test"
+  ]
+}
