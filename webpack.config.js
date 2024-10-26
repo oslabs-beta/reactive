@@ -10,6 +10,7 @@ module.exports = [
       path: path.resolve(__dirname, 'dist'),
       filename: 'extension.js',
       libraryTarget: 'commonjs2',
+      clean: true
     },
     externals: {
       vscode: 'commonjs vscode',
@@ -26,6 +27,7 @@ module.exports = [
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'webview.js',
+      clean: false
     },
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
