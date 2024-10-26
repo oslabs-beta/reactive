@@ -1,19 +1,10 @@
-import React, { useRef, useEffect, useState } from 'react';
-import * as d3 from 'd3';
-//import { treeObj } from '../server/extension' with {type: "json"} //--> whole mess of errors when I don't have "with {type: `json`}. This line is causing the errors.
+const { useRef, useEffect, useState } = require('react');
+async function loadD3Module() {
+  const d3 = await import('d3');
 
-//use message passing for vs code to webview instead of direct imports
-
-// async function loadModule() {
-//   const module = await import('./extension.js')
-// };
-
-// const treeO = treeObj;
-// console.log("I'm a tree that's growing right now!", treeO)
-
-const Dendrogram = () => {
+const Dendrogram = (data) => {
   const svgRef = useRef();
-  const [tree, setTree] = useState({});
+  //const [tree, setTree] = useState({});
 
   useEffect(() => {
     if (svgRef.current) {
@@ -22,7 +13,7 @@ const Dendrogram = () => {
       const height = 400;
 
       const tree = d3.tree().size([height, width - 100]);
-      const root = d3.hierarchy(dummyData);
+      const root = d3.hierarchy(data);
       const links = tree(root).links();
       const nodes = root.descendants();
 
@@ -71,4 +62,25 @@ const Dendrogram = () => {
   );
 };
 
-export default Dendrogram;
+const vscode = acquireVSCodeAPI();
+
+vscode.postMessage({type: 'webviewREady'});
+
+window.addEventListener('message', event => {
+  console.log('Received message:', event.data);  // Should log { type: 'testMessage', payload: 'Hello from extension!' }
+});
+
+window.addEventListener('message', event => {
+  const message = event.data;
+  const test = document.getElementById('test')
+  test.textContent = "Changed!"
+
+  if(message.type === 'astData') {
+    const astData = message.payload;
+
+    Dendrogram(astData)
+  }
+})
+}
+//console.log("I'm a tree that's growing right now!", tree)
+module.exports ={loadD3Module};
