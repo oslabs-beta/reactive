@@ -1,30 +1,19 @@
-// TODO for Micah to build out
-
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
+//import { treeObj } from '../server/extension' with {type: "json"} //--> whole mess of errors when I don't have "with {type: `json`}. This line is causing the errors.
 
-const dummyData = {
-  name: "Colin",
-  children: [
-    {
-      name: "T Rex monster",
-      children: [
-        { name: "TBD 1.1" },
-        { name: "TBD 1.2" }
-      ]
-    },
-    {
-      name: "Gizmo",
-      children: [
-        { name: "Stripe" },
-        { name: "MoHawk" }
-      ]
-    }
-  ]
-};
+//use message passing for vs code to webview instead of direct imports
+
+// async function loadModule() {
+//   const module = await import('./extension.js')
+// };
+
+// const treeO = treeObj;
+// console.log("I'm a tree that's growing right now!", treeO)
 
 const Dendrogram = () => {
   const svgRef = useRef();
+  const [tree, setTree] = useState({});
 
   useEffect(() => {
     if (svgRef.current) {

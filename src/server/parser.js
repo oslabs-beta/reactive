@@ -17,7 +17,7 @@ function parseFileToAST(filePath) {
   });
 }
 
-// Helper function to get component type (class or function)
+// //Helper function to get component type (class or function)
 // function getComponentType(node) {
 //   if (node.type === 'ClassDeclaration') return 'class';
 //   if (node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') return 'functional';
@@ -61,22 +61,22 @@ function findComponentTypeAndState(ast) {
         }
       }
     },
-    // Parse for state data
-    // CallExpression(path) {
-    //    if (path.node.callee.name === 'useState') {
-    //     const [stateVar, setter] = path.node.arguments;
-    //     if (stateVar && stateVar.type === 'ArrayPattern') {
-    //        stateVar.elements.forEach(element => {
-    //         if (element.type === 'Identifier') {
-    //            // Ignore setter functions, include only state variables
-    //            /*if (!element.name.startsWith('set')) {*/
-    //             stateVariables.push(element.name);
-    //            //}
-    //         }
-    //        });
-    //     }  
-    //    }
-    // }
+    //Parse for state data
+    CallExpression(path) {
+       if (path.node.callee.name === 'useState') {
+        const [stateVar, setter] = path.node.arguments;
+        if (stateVar && stateVar.type === 'ArrayPattern') {
+           stateVar.elements.forEach(element => {
+            if (element.type === 'Identifier') {
+               // Ignore setter functions, include only state variables
+               /*if (!element.name.startsWith('set')) {*/
+                stateVariables.push(element.name);
+               //}
+            }
+           });
+        }  
+       }
+    }
   });
 
   return {type, stateVariables };
@@ -138,17 +138,10 @@ function buildComponentTree(filePath, baseDir) {
   // Return just the file name and the component type
   return {
     file: path.basename(filePath),  // Return the file name instead of full path
-    //type:,  // Return the component type (class or functional)
-    //state: stateVariables,
+    type: type,  // Return the component type (class or functional)
+    state: stateVariables,
     children: children.filter(Boolean), // Remove any invalid entries
   };
 }
 
 module.exports = { buildComponentTree };
-
-// Example usage:
-// const baseDir = './client';  // The base directory containing your components
-// const entryFile = './src/components/App.jsx';  // The entry point of your component tree
-
-// const tree = buildComponentTree(entryFile, baseDir);
-// console.log(JSON.stringify(tree, null, 2));
