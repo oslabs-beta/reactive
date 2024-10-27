@@ -1,6 +1,24 @@
+console.log("inside dendrogram at top") // logging
 const { useRef, useEffect, useState } = require('react');
 async function loadD3Module() {
   const d3 = await import('d3');
+
+  window.addEventListener('message', event => {
+    console.log("I hear an event!") // not logging
+
+    if(message.type === 'testMessage'){
+      console.log('Received message:', event.data); // not logging
+    }
+
+    if(message.type === 'astData') {
+      const astData = message.payload;
+
+      Dendrogram(astData)
+    }
+  });
+  // useEffect(() =>  {
+  // }, [])
+
 
 const Dendrogram = (data) => {
   const svgRef = useRef();
@@ -61,26 +79,22 @@ const Dendrogram = (data) => {
     </svg>
   );
 };
-
-const vscode = acquireVSCodeAPI();
-
-vscode.postMessage({type: 'webviewREady'});
-
-window.addEventListener('message', event => {
-  console.log('Received message:', event.data);  // Should log { type: 'testMessage', payload: 'Hello from extension!' }
-});
-
-window.addEventListener('message', event => {
-  const message = event.data;
-  const test = document.getElementById('test')
-  test.textContent = "Changed!"
-
-  if(message.type === 'astData') {
-    const astData = message.payload;
-
-    Dendrogram(astData)
-  }
-})
 }
-//console.log("I'm a tree that's growing right now!", tree)
+//const vscode = acquireVSCodeAPI();
+
+// vscode.postMessage({type: 'webviewReady'});
+// console.log("inside dendrogram")
+
+// window.addEventListener('message', event => {
+
+//   if(message.type === 'testMessage'){
+//     console.log('Received message:', event.data);
+//   }
+
+//   if(message.type === 'astData') {
+//     const astData = message.payload;
+
+//     Dendrogram(astData)
+//   }
+// });
 module.exports ={loadD3Module};
