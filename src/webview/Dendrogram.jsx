@@ -80,21 +80,5 @@ const Dendrogram = (data) => {
   );
 };
 }
-//const vscode = acquireVSCodeAPI();
 
-// vscode.postMessage({type: 'webviewReady'});
-// console.log("inside dendrogram")
-
-// window.addEventListener('message', event => {
-
-//   if(message.type === 'testMessage'){
-//     console.log('Received message:', event.data);
-//   }
-
-//   if(message.type === 'astData') {
-//     const astData = message.payload;
-
-//     Dendrogram(astData)
-//   }
-// });
 module.exports ={loadD3Module};

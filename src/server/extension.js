@@ -44,7 +44,7 @@ function activate(context) {
       const webviewJsPath = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'));
       const webviewJsUri = panel.webview.asWebviewUri(webviewJsPath);
 
-      panel.webview.postMessage({ type: 'testMessage', payload: 'Hello from extension!' });
+      panel.webview.postMessage({ type: 'testMessage', payload: 'Hello from extension!' }).then(console.log("posted")); //this logs
 
       panel.webview.onDidReceiveMessage(
         async message => {
@@ -52,7 +52,7 @@ function activate(context) {
           if(message.type === 'onData'){
             console.log("message value: " + message.value); // this logs
             context.workspaceState.update('renderReact', message.value)
-            panel.webview.postMessage(tree).then(console.log("posted: " + tree)); //{type: 'astData', payload: message.value, settings: vscode.workspace.getConfiguration('renderReact')}
+            panel.webview.postMessage(tree).then(console.log("posted")); //this logs, which I believe only works if the message contents are valid. otherwise, may need to use this instead of 'tree' -> {type: 'astData', payload: message.value, settings: vscode.workspace.getConfiguration('renderReact')}
           }
         }, undefined, context.subscriptions)
       
@@ -74,24 +74,25 @@ function activate(context) {
         <h1>Sup Fellas!</h1>
         <div id="root"></div>
           <div id="dendrogram"></div>
-          <script src="https://d3js.org/d3.v7.min.js"></script>
-          <script>
-            const vscode = acquireVsCodeApi();
-            window.onload = () => {
-              vscode.postMessage({
-                type: 'onData',
-                value: ${obj}
-              })
-            }
+          
+            <script src="https://d3js.org/d3.v7.min.js"></script>
+
+            <script>
+              const vscode = acquireVsCodeApi();
+              window.onload = () => {
+                vscode.postMessage({
+                  type: 'onData',
+                  value: ${obj}
+                });
+              };
           </script>
+
           <script src=${uri}></script>
+
       </body>
       </html>
     `);
   }
-    // Register all the commands to the context, so VSCode can activate them
-  
-  
 
 // Deactivate the extension
 function deactivate() {}
@@ -100,36 +101,3 @@ module.exports = {
   activate,
   deactivate
 };
-//   // Path to the webview's JavaScript file
-//   const webviewJsPath = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'));
-//   const webviewJsUri = panel.webview.asWebviewUri(webviewJsPath);
-
-//   // HTML content for the webview
-//   panel.webview.html = `
-//     <!DOCTYPE html>
-//     <html lang="en">
-//     <head>
-//       <meta charset="UTF-8">
-//       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-//       <title>React Component Tree</title>
-//       <style>
-//         body {
-//           font-family: Arial, sans-serif;
-//           margin: 0;
-//           padding: 0;
-//         }
-//       </style>
-//     </head>
-//     <body>
-//       <h1>Sup Handsome Fellas!</h1>
-//       <h2 id="dendro">Tree</h2>
-//       <div id="root"></div>
-//       <script src="${webviewJsUri}"></script>
-//       <script>
-//         const dendro = document.getElementById('dendro');
-//         dendro.textContent = ${dendrogram(treeAST)}
-//       </script>
-//     </body>
-//     </html>
-//   `;
-// });
