@@ -1,17 +1,17 @@
-console.log("inside dendrogram at top") // logging
+console.log("inside dendrogram at top") // logs
 const { useRef, useEffect, useState } = require('react');
 async function loadD3Module() {
   const d3 = await import('d3');
 
   window.addEventListener('message', event => {
-    console.log("I hear an event!") // not logging
-
-    if(message.type === 'testMessage'){
-      console.log('Received message:', event.data); // not logging
+    console.log("I hear an event!") // logs
+    console.log("event.data.type: " + event.data.type)
+    if(event.data.type === 'testMessage'){
+      console.log('Received message:', event.data.payload); // logs
     }
 
-    if(message.type === 'astData') {
-      const astData = message.payload;
+    if(event.data.type === 'astData') {
+      const astData = event.data.payload;
 
       Dendrogram(astData)
     }
@@ -80,5 +80,6 @@ const Dendrogram = (data) => {
   );
 };
 }
+loadD3Module();
 
 module.exports ={loadD3Module};

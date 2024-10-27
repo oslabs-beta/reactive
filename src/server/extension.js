@@ -44,7 +44,7 @@ function activate(context) {
       const webviewJsPath = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'));
       const webviewJsUri = panel.webview.asWebviewUri(webviewJsPath);
 
-      panel.webview.postMessage({ type: 'testMessage', payload: 'Hello from extension!' }).then(console.log("posted")); //this logs
+      panel.webview.postMessage({ type: 'testMessage', payload: 'Hello from extension!' }).then(console.log("posted test")); //this logs
 
       panel.webview.onDidReceiveMessage(
         async message => {
@@ -52,7 +52,7 @@ function activate(context) {
           if(message.type === 'onData'){
             console.log("message value: " + message.value); // this logs
             context.workspaceState.update('renderReact', message.value)
-            panel.webview.postMessage(tree).then(console.log("posted")); //this logs, which I believe only works if the message contents are valid. otherwise, may need to use this instead of 'tree' -> {type: 'astData', payload: message.value, settings: vscode.workspace.getConfiguration('renderReact')}
+            panel.webview.postMessage({type: 'astData', payload: message.value, settings: vscode.workspace.getConfiguration('renderReact')}).then(console.log("posted actual")); //this logs, which I believe only works if the message contents are valid. otherwise, may need to use this instead of 'tree' -> 
           }
         }, undefined, context.subscriptions)
       
