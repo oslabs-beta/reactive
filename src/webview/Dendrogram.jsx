@@ -9,15 +9,15 @@ const dummyData = {
     {
       name: "T Rex monster",
       children: [
-        { name: "TBD 1.1" },
-        { name: "TBD 1.2" }
+        { name: "JARED" },
+        { name: "NICK" }
       ]
     },
     {
-      name: "Gizmo",
+      name: "Testing",
       children: [
-        { name: "Stripe" },
-        { name: "MoHawk" }
+        { name: "SARA" },
+        { name: "ELIZABETH" }
       ]
     }
   ]
