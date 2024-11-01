@@ -27,16 +27,18 @@
       }
     ]
   },
-  "scripts": {
-    "compile": "tsc -p ./tsconfig.json",
-    "watch": "tsc -watch -p ./tsconfig.json",
-    "webpack": "webpack",
-    
-    "build": "npm run compile && npm run webpack",
-    "lint": "eslint src",
-    "pretest": "npm run compile",
-    "test": "node ./out/test/runTest.js"
-  },
+"scripts": {
+    "build": "npm run compile && npm run webpack",     
+    "compile": "tsc -p ./tsconfig.json",                
+    "webpack": "webpack",                               
+    "frontend:watch": "webpack --watch",               
+    "backend:watch": "tsc -watch -p ./tsconfig.json",  
+    "watch": "tsc -watch -p ./tsconfig.json",          
+    "lint": "eslint src",                              
+    "pretest": "npm run compile",                      
+    "test": "node ./out/test/runTest.js"               
+},
+
   "devDependencies": {
     "@babel/eslint-parser": "^7.25.8",
     "@types/jsdom": "^21.1.7",
