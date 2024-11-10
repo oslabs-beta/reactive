@@ -106,41 +106,58 @@ function findImportsInAST(ast) {
 
 // Build a component tree from the file system and source code
 function buildComponentTree(filePath, baseDir) {
+  /* DEBUG LOGGING GUIDE
+   * To enable full debug logging, uncomment the console.log statements below
+   * Logging levels:
+   * 1. Basic: Only show import findings and warnings / see how buildComponentTree works
+   * 2. Detailed: Show file checking and extension matching (uncomment Level 2)
+   * 3. Verbose: Show all processing steps (uncomment Level 2 & 3)
+   */
+
   const absoluteFilePath = path.resolve(baseDir, filePath);
-  console.log('\n=== Starting buildComponentTree ===');
-  console.log('Checking file:', absoluteFilePath);
+  // LEVEL 3: Process Start
+  // console.log('\n=== Starting buildComponentTree ===');
+  // console.log('Checking file:', absoluteFilePath);
 
   if (!fs.existsSync(absoluteFilePath)) {
-    console.error(`File does not exist, absoluteFilePath : ${absoluteFilePath}`);
+    // LEVEL 2: File Resolution
+    // console.error(`File does not exist, absoluteFilePath : ${absoluteFilePath}`);
     return null;
   }
 
   const ast = parseFileToAST(absoluteFilePath);
+  const {type, stateVariables} = findComponentTypeAndState(ast);
   
-  // Determine the component type (functional or class)
-  const {type, stateVariables } = findComponentTypeAndState(ast);
-  
-  // Find imports to identify child components
+  // LEVEL 1: Import Detection (To see how buildComponentTree works)
   const imports = findImportsInAST(ast);
   console.log('Found imports:', imports);
 
   const children = imports
     .map((importPath) => {
-      console.log('\n--- Processing import:', importPath);
-      // Try each extension until we find a matching file
+      // LEVEL 3: Import Processing
+      // console.log('\n--- Processing import:', importPath);
+
+      /* Extension Matching Process:
+       * 1. Try each extension in order: .js -> .jsx -> .ts -> .tsx
+       * 2. First match is used
+       * 3. If no match, returns null and logs warning
+       */
       const extensions = ['.js', '.jsx', '.ts', '.tsx'];
       let resolvedPath = null;
       
       for (const ext of extensions) {
         const testPath = path.resolve(path.dirname(absoluteFilePath), `${importPath}${ext}`);
-        console.log(`Testing path ${ext}:`, testPath);
+        // LEVEL 2: Extension Testing
+        // console.log(`Testing path ${ext}:`, testPath);
         if (fs.existsSync(testPath)) {
           resolvedPath = testPath;
-          console.log('Found matching file with extension, ext :', ext);
+          // LEVEL 2: Match Found
+          // console.log('Found matching file with extension, ext :', ext);
           break;
         }
       }
       
+      // LEVEL 1: Resolution Failures 
       if (!resolvedPath) {
         console.warn(`Warning: No matching file found for import, importPath: ${importPath}`);
         return null;
@@ -148,16 +165,34 @@ function buildComponentTree(filePath, baseDir) {
 
       return buildComponentTree(resolvedPath, baseDir);
     })
-    .filter(Boolean); // Remove any null values
+    .filter(Boolean);
 
-  // Return just the file name and the component type
   return {
-    file: path.basename(filePath),  // Return the file name instead of full path
-    type: type,  // Return the component type (class or functional)
+    file: path.basename(filePath),
+    type: type,
     state: stateVariables,
-    children: children.filter(Boolean), // Remove any invalid entries
+    children: children.filter(Boolean),
   };
 }
+
+/* USAGE EXAMPLES:
+ *
+ * // Basic usage (Level 1 logging)
+ * const tree = buildComponentTree('./src/App.jsx', './src');
+ * 
+ * // For debugging extension resolution (Level 2)
+ * // Uncomment Level 2 logs to see:
+ * // - File existence checks
+ * // - Extension matching attempts
+ * // - Successful matches
+ *
+ * // For full debug output (Level 3)
+ * // Uncomment all logs to see:
+ * // - Process start/end
+ * // - All file operations
+ * // - Import processing
+ * // - Extension matching
+ */
 
 module.exports = { buildComponentTree };
 
