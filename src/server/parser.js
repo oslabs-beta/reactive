@@ -107,9 +107,11 @@ function findImportsInAST(ast) {
 // Build a component tree from the file system and source code
 function buildComponentTree(filePath, baseDir) {
   const absoluteFilePath = path.resolve(baseDir, filePath);
+  console.log('\n=== Starting buildComponentTree ===');
+  console.log('Checking file:', absoluteFilePath);
 
   if (!fs.existsSync(absoluteFilePath)) {
-    console.error(`File does not exist: ${absoluteFilePath}`);
+    console.error(`File does not exist, absoluteFilePath : ${absoluteFilePath}`);
     return null;
   }
 
@@ -120,26 +122,39 @@ function buildComponentTree(filePath, baseDir) {
   
   // Find imports to identify child components
   const imports = findImportsInAST(ast);
+  console.log('Found imports:', imports);
 
   const children = imports
     .map((importPath) => {
-      // Resolve relative import path to an actual file
-      const resolvedImportPath = path.resolve(path.dirname(absoluteFilePath), `${importPath}.jsx`);
+      console.log('\n--- Processing import:', importPath);
+      // Try each extension until we find a matching file
+      const extensions = ['.js', '.jsx', '.ts', '.tsx'];
+      let resolvedPath = null;
       
-      if (!fs.existsSync(resolvedImportPath)) {
-        console.warn(`Warning: Imported file not found: ${resolvedImportPath}`);
+      for (const ext of extensions) {
+        const testPath = path.resolve(path.dirname(absoluteFilePath), `${importPath}${ext}`);
+        console.log(`Testing path ${ext}:`, testPath);
+        if (fs.existsSync(testPath)) {
+          resolvedPath = testPath;
+          console.log('Found matching file with extension, ext :', ext);
+          break;
+        }
+      }
+      
+      if (!resolvedPath) {
+        console.warn(`Warning: No matching file found for import, importPath: ${importPath}`);
         return null;
       }
 
-      return buildComponentTree(resolvedImportPath, baseDir);
+      return buildComponentTree(resolvedPath, baseDir);
     })
     .filter(Boolean); // Remove any null values
 
   // Return just the file name and the component type
   return {
     file: path.basename(filePath),  // Return the file name instead of full path
-    //type:,  // Return the component type (class or functional)
-    //state: stateVariables,
+    type: type,  // Return the component type (class or functional)
+    state: stateVariables,
     children: children.filter(Boolean), // Remove any invalid entries
   };
 }
