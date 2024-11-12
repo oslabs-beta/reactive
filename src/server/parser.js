@@ -13,7 +13,7 @@ function parseFileToAST(filePath) {
   
   return parser.parse(code, {
     sourceType: 'module', // ECMAScript module
-    plugins: ['jsx'],     // Enable JSX support
+    plugins: ['jsx', 'typescript'],     // Enable JSX support
   });
 }
 
@@ -142,7 +142,7 @@ function buildComponentTree(filePath, baseDir) {
        * 2. First match is used
        * 3. If no match, returns null and logs warning
        */
-      const extensions = ['.js', '.jsx', '.ts', '.tsx'];
+      const extensions = ['.jsx', '.tsx'];
       let resolvedPath = null;
       
       for (const ext of extensions) {
