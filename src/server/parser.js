@@ -13,7 +13,7 @@ function parseFileToAST(filePath) {
   
   return parser.parse(code, {
     sourceType: 'module', // ECMAScript module
-    plugins: ['jsx'],     // Enable JSX support
+    plugins: ['jsx', 'typescript'],     // Enable JSX support
   });
 }
 
