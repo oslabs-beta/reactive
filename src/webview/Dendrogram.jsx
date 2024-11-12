@@ -13,7 +13,6 @@ async function loadD3Module() {
     if(event.data.type === 'astData') {
       console.log('astData: ' + event.data.payload) // logs
       const astData = event.data.payload;
-
       Dendrogram(astData)
     }
   });
