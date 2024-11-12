@@ -60,6 +60,31 @@ function activate(context) {
       });
     context.subscriptions.push(renderReact);
   }
+  /**
+   * Display the React component tree in the Output channel.
+   * Prompts the user to select a file, builds the component tree, and displays it in the VSCode Output panel.
+   */
+  const makeComponentTree = vscode.commands.registerCommand('reactive.makeComponentTree', async () => {
+    const options = {
+      canSelectMany: false,
+      openLabel: 'Select topmost parent component',
+      filters: {
+        'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
+      }
+    };
+
+    const fileUri = await vscode.window.showOpenDialog(options);
+    if (fileUri && fileUri[0]) {
+      const filePath = fileUri[0].fsPath;
+      const baseDir = path.dirname(filePath);
+      const tree = buildComponentTree(filePath, baseDir);
+
+      // Create a new output channel to display the tree
+      const outputChannel = vscode.window.createOutputChannel('React Component Tree');
+      outputChannel.appendLine(`Component Tree: ${JSON.stringify(tree, null, 2)}`);
+      outputChannel.show();
+    }
+  });
 
   function getWebviewContent(uri, obj) {
     return (`

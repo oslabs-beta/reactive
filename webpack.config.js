@@ -5,31 +5,18 @@ module.exports = [
     name: 'extension',
     mode: 'development',
     target: 'node',
-    entry: './src/server/extension.js',
+    entry: './out/server/extension.js',
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'extension.js',
       libraryTarget: 'commonjs2',
+      clean: true
     },
     externals: {
       vscode: 'commonjs vscode',
     },
     resolve: {
-      extensions: ['.js', '.jsx'],
-    },
-    module: {
-      rules: [
-        {
-          test: /\.(js|jsx)$/,
-          exclude: /node_modules/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              presets: ['@babel/env', '@babel/react'],
-            },
-          },
-        },
-      ],
+      extensions: ['.js', '.ts'],
     },
   },
   {
@@ -40,9 +27,10 @@ module.exports = [
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'webview.js',
+      clean: false
     },
     resolve: {
-      extensions: ['.js', '.jsx'],
+      extensions: ['.js', '.jsx', '.ts', '.tsx'],
     },
     module: {
       rules: [
