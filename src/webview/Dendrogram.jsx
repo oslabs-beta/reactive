@@ -7,7 +7,7 @@ async function loadD3Module() {
     console.log("I hear an event!") // logs
     console.log("event.data.type: " + event.data.type)
     if(event.data.type === 'testMessage'){
-      console.log('Received message:', event.data.payload); // logs
+      //console.log('Received message:', event.data.payload); // logs
     }
 
     if(event.data.type === 'astData') {
@@ -18,6 +18,7 @@ async function loadD3Module() {
   });
 
 const Dendrogram = (data) => {
+  //console.log("inside dendrogram. this is the passed in data: ", data) // does not log
   const svgRef = useRef();
   //const [tree, setTree] = useState({});
 

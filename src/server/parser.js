@@ -130,7 +130,7 @@ function buildComponentTree(filePath, baseDir) {
   
   // LEVEL 1: Import Detection (To see how buildComponentTree works)
   const imports = findImportsInAST(ast);
-  console.log('Found imports:', imports);
+  //console.log('Found imports:', imports);
 
   const children = imports
     .map((importPath) => {
