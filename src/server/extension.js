@@ -12,7 +12,7 @@ function activate(context) {
    * This function creates a new Webview panel and displays an HTML page
    * that loads a React app script from the extension's dist folder.
    */
-  const renderReact = vscode.commands.registerCommand('reactive2.renderReact', async () => {
+  const renderReact = vscode.commands.registerCommand('reactive.renderReact', async () => {
     let appName = ""
     const options = {
       canSelectMany: false,
