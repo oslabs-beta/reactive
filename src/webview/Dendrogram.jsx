@@ -1,64 +1,148 @@
-console.log("inside dendrogram at top") // logs
-const { useRef, useEffect } = require('react');
+//console.log("Inside Dendrogram at top")
+import React, { useRef, useEffect } from "react";
+import ReactDOM from "react-dom";
 import * as d3 from "d3";
 
-  window.addEventListener('message', event => {
-    console.log("I hear an event!") // logs
-    console.log("event.data.type: " + event.data.type)
-    if(event.data.type === 'testMessage'){
-      console.log('Received message:', event.data.payload); // logs
-    }
+// Listen for messages and render the Dendrogram when astData is received
+window.addEventListener("message", event => {
+  console.log("I hear an event!"); // logs
+  console.log("event.data.type: " + event.data.type);
 
-    if(event.data.type === 'astData') {
-      console.log('astData: ' + event.data.payload) // logs
-      const astData = event.data.payload;
-      Dendrogram(astData)
-    }
-  });
+  if (event.data.type === "testMessage") {
+    console.log("Received message:", event.data.payload); // logs
+  }
 
-const Dendrogram = (data) => {
-  console.log("inside dendrogram. this is the passed in data: ", data) // does not log
+  if (event.data.type === "astData") {
+    console.log("astData: " + event.data.payload); // logs
+    const astData = event.data.payload;
+
+    // Render the Dendrogram component and pass the astData as a prop
+    ReactDOM.render(<Dendrogram data={astData} />, document.getElementById("root"));
+  }
+});
+
+const Dendrogram = ({ data }) => {
+  console.log("inside dendrogram. this is the passed in data: ", data); // should log now
   const svgRef = useRef();
-  //const [tree, setTree] = useState({});
 
   useEffect(() => {
     if (svgRef.current) {
       const svg = d3.select(svgRef.current);
-      const width = 600;
-      const height = 400;
+      const margin = { top: 50, right: 20, bottom: 20, left: 20 };
+      const width = 600 - margin.left - margin.right;
+      const height = 600 - margin.top - margin.bottom;
 
+      // Create tree and layout
       const tree = d3.tree().size([height, width - 100]);
-      const root = d3.hierarchy(data);
+      const root = d3.hierarchy(data); // Use the passed-in data as the root of the hierarchy
       const links = tree(root).links();
       const nodes = root.descendants();
 
+      // Render links
       svg.selectAll(".link")
         .data(links)
-        .enter().append("path")
+        .enter()
+        .append("path")
         .attr("class", "link")
-        .attr("d", d3.linkHorizontal()
-          .x(d => d.y)
-          .y(d => d.x));
+        .attr(
+          "d",
+          d3
+            .linkVertical()
+            .x(d => d.x)
+            .y(d => d.y)
+        );
 
+      // Render nodes
       const node = svg.selectAll(".node")
         .data(nodes)
-        .enter().append("g")
+        .enter()
+        .append("g")
         .attr("class", "node")
-        .attr("transform", d => `translate(${d.y},${d.x})`);
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .on("click", (event, d) => {
+          if (d.children) {
+            d._children = d.children;
+            d.children = null;
+          } else {
+            d.children = d._children;
+            d._children = null;
+          }
+          update(root);
+        });
 
       node.append("circle")
-        .attr("r", 4);
+        .attr("r", 40)
+        .style("fill", "yellow");
 
       node.append("text")
         .attr("dy", ".31em")
-        .attr("x", d => d.children ? -8 : 8)
-        .style("text-anchor", d => d.children ? "end" : "start")
-        .text(d => d.data.name);
+        .attr("text-anchor", "middle")
+        .text(d => d.data.file)
+        .style("fill", "blue");
+
+      function update(root) {
+        // Update nodes
+        const node = svg.selectAll(".node")
+          .data(root.descendants(), d => d.data.file);
+
+        const nodeEnter = node.enter().append("g")
+          .attr("class", "node")
+          .attr("transform", d => `translate(${d.x},${d.y})`)
+          .on("click", (event, d) => {
+            if (d.children) {
+              d._children = d.children;
+              d.children = null;
+            } else {
+              d.children = d._children;
+              d._children = null;
+            }
+            update(root);
+          });
+
+        nodeEnter.append("circle")
+          .attr("r", 40)
+          .style("fill", "yellow");
+
+        nodeEnter.append("text")
+          .attr("dy", ".31em")
+          .attr("text-anchor", "middle")
+          .text(d => d.data.file)
+          .style("fill", "blue");
+
+        node.transition()
+          .duration(750)
+          .attr("transform", d => `translate(${d.x},${d.y})`);
+
+        node.exit().remove();
+
+        // Update links
+        const links = svg.selectAll(".link")
+          .data(root.links().filter(link => !link.source._children), d => d.source.data.file + "-" + d.target.data.file);
+
+        links.enter()
+          .append("path")
+          .attr("class", "link")
+          .attr("d", d => {
+            const o = { x: d.source.x, y: d.source.y };
+            return vertical({ source: o, target: o });
+          })
+          .transition()
+          .duration(750)
+          .attr("d", d => vertical(d));
+
+        links.transition()
+          .duration(750)
+          .attr("d", d => vertical(d));
+
+        const vertical = d3.linkVertical()
+          .x(d => d.x)
+          .y(d => d.y);
+      }
     }
-  }, []);
+  }, [data]);
 
   return (
-    <svg ref={svgRef} width="600" height="400">
+    <svg ref={svgRef} width="600" height="600" viewBox="-70 -50 600 600">
       <style>{`
         .link {
           fill: none;
@@ -67,7 +151,7 @@ const Dendrogram = (data) => {
           stroke-width: 1.5px;
         }
         .node circle {
-          fill: #999;
+          fill: white;
         }
         .node text {
           font-size: 12px;
@@ -77,4 +161,4 @@ const Dendrogram = (data) => {
   );
 };
 
-export default Dendrogram
+export default Dendrogram;
