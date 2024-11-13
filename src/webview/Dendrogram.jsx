@@ -103,6 +103,60 @@ const Dendrogram = ({ data }) => {
         .attr("text-anchor", "middle")
         .text((d) => `${d.data.type}`)
         .style("fill", "green");
+      
+      node.append("text")
+        .attr("y", 25)
+        .attr("text-anchor", "middle")
+        .text((d) => `State: ${d.data.state.length} items`)
+        .style("fill", "purple")
+        .style("cursor", "pointer")
+        .on("click", (event, d) => {
+          event.stopPropagation(); // Prevent node collapse
+
+          // Remove any existing state details
+          g.selectAll(".state-details").remove();
+
+          // Create state details popup
+          const stateDetails = g
+            .append("g")
+            .attr("class", "state-details")
+            .attr("transform", `translate(${d.x + 100},${d.y - 30})`);
+
+          // Popup background
+          stateDetails
+            .append("rect")
+            .attr("x", -170)
+            .attr("y", 80)
+            .attr("width", 150)
+            .attr("height", d.data.state.length * 20 + 20)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .style("fill", "white")
+            .style("stroke", "purple")
+            .style("stroke-width", "1px");
+
+          // Close button
+          stateDetails
+            .append("text")
+            .attr("x", -35)
+            .attr("y", 95)
+            .text("×")
+            .style("fill", "purple")
+            .style("cursor", "pointer")
+            .style("font-size", "16px")
+            .on("click", () => stateDetails.remove());
+
+          // State items list
+          d.data.state.forEach((item, i) => {
+            stateDetails
+              .append("text")
+              .attr("x", -160)
+              .attr("y", i * 20 + 100)
+              .text(item)
+              .style("fill", "purple")
+              .style("font-size", "12px");
+          });
+        });
 
       // Update function to handle re-rendering of the tree (for collapsibility)
       function update(root) {
@@ -120,14 +174,77 @@ const Dendrogram = ({ data }) => {
           .attr("height", 55)
           .attr("rx", 10)
           .attr("ry", 10)
-          .style("fill", "yellow");
+          .style("fill", "yellow"); // pass in func as second arg to conditionally render diff color
 
-        nodeEnter
-          .append("text")
-          .attr("dy", ".31em")
-          .attr("text-anchor", "middle")
+        // append text to nodes
+        nodeEnter.append("text")
+          .attr("y", -5)
+          .attr("text-anchor", "middle") // centers text in node
+          // .attr("x", d => d.children ? -8 : 8)
+          // .style("text-anchor", d => d.children ? "end" : "start")
           .text((d) => d.data.file)
           .style("fill", "blue");
+          
+          // Append text for component type below file name
+        nodeEnter.append("text")
+          .attr("y", 10) // Adjust vertical position to be below the file name
+          .attr("text-anchor", "middle")
+          .text((d) => `${d.data.type}`)
+          .style("fill", "green");
+        
+        nodeEnter.append("text")
+          .attr("y", 25)
+          .attr("text-anchor", "middle")
+          .text((d) => `State: ${d.data.state.length} items`)
+          .style("fill", "purple")
+          .style("cursor", "pointer")
+          .on("click", (event, d) => {
+            event.stopPropagation(); // Prevent node collapse
+
+            // Remove any existing state details
+            g.selectAll(".state-details").remove();
+
+            // Create state details popup
+            const stateDetails = g
+              .append("g")
+              .attr("class", "state-details")
+              .attr("transform", `translate(${d.x + 100},${d.y - 30})`);
+
+            // Popup background
+            stateDetails
+              .append("rect")
+              .attr("x", -170)
+              .attr("y", 80)
+              .attr("width", 150)
+              .attr("height", d.data.state.length * 20 + 20)
+              .attr("rx", 5)
+              .attr("ry", 5)
+              .style("fill", "white")
+              .style("stroke", "purple")
+              .style("stroke-width", "1px");
+
+            // Close button
+            stateDetails
+              .append("text")
+              .attr("x", -35)
+              .attr("y", 95)
+              .text("×")
+              .style("fill", "purple")
+              .style("cursor", "pointer")
+              .style("font-size", "16px")
+              .on("click", () => stateDetails.remove());
+
+            // State items list
+            d.data.state.forEach((item, i) => {
+              stateDetails
+                .append("text")
+                .attr("x", -160)
+                .attr("y", i * 20 + 100)
+                .text(item)
+                .style("fill", "purple")
+                .style("font-size", "12px");
+            });
+          });
 
         // Transition nodes
         nodes.transition().duration(750).attr("transform", (d) => `translate(${d.x},${d.y})`);
