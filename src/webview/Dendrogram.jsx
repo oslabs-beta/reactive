@@ -4,15 +4,15 @@ import { createRoot } from "react-dom/client";
 import * as d3 from "d3";
 
 window.addEventListener("message", event => {
-  console.log("I hear an event!"); // logs
-  console.log("event.data.type: " + event.data.type);
+  //console.log("I hear an event!"); // logs
+  //console.log("event.data.type: " + event.data.type);
 
   if (event.data.type === "testMessage") {
-    console.log("Received message:", event.data.payload); // logs
+    //console.log("Received message:", event.data.payload); // logs
   }
 
   if (event.data.type === "astData") {
-    console.log("astData: " + event.data.payload); // logs
+    //console.log("astData: " + event.data.payload); // logs
     const astData = event.data.payload;
 
     // Use createRoot to render the Dendrogram component
@@ -23,7 +23,7 @@ window.addEventListener("message", event => {
 });
 
 const Dendrogram = ({ data }) => {
-  console.log("inside dendrogram. this is the passed in data: ", data); // should log now
+  //console.log("inside dendrogram. this is the passed in data: ", data); // logs
   const svgRef = useRef();
 
   useEffect(() => {
