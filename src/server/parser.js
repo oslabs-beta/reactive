@@ -13,11 +13,11 @@ function parseFileToAST(filePath) {
   
   return parser.parse(code, {
     sourceType: 'module', // ECMAScript module
-    plugins: ['jsx'],     // Enable JSX support
+    plugins: ['jsx', 'typescript'],     // Enable JSX support
   });
 }
 
-// Helper function to get component type (class or function)
+// //Helper function to get component type (class or function)
 // function getComponentType(node) {
 //   if (node.type === 'ClassDeclaration') return 'class';
 //   if (node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') return 'functional';
@@ -61,22 +61,14 @@ function findComponentTypeAndState(ast) {
         }
       }
     },
-    // Parse for state data
-    // CallExpression(path) {
-    //    if (path.node.callee.name === 'useState') {
-    //     const [stateVar, setter] = path.node.arguments;
-    //     if (stateVar && stateVar.type === 'ArrayPattern') {
-    //        stateVar.elements.forEach(element => {
-    //         if (element.type === 'Identifier') {
-    //            // Ignore setter functions, include only state variables
-    //            /*if (!element.name.startsWith('set')) {*/
-    //             stateVariables.push(element.name);
-    //            //}
-    //         }
-    //        });
-    //     }  
-    //    }
-    // }
+    //Parse for state data
+
+    VariableDeclarator(path) {
+      //const result = {};
+        if (path.node && path.node.init && path.node.init.callee && path.node.init.callee.name === 'useState'){
+          stateVariables.push(path.node.id.elements[0].name)
+      };
+    }
   });
 
   return {type, stateVariables };
@@ -130,7 +122,7 @@ function buildComponentTree(filePath, baseDir) {
   
   // LEVEL 1: Import Detection (To see how buildComponentTree works)
   const imports = findImportsInAST(ast);
-  console.log('Found imports:', imports);
+  //console.log('Found imports:', imports);
 
   const children = imports
     .map((importPath) => {
@@ -142,7 +134,7 @@ function buildComponentTree(filePath, baseDir) {
        * 2. First match is used
        * 3. If no match, returns null and logs warning
        */
-      const extensions = ['.js', '.jsx', '.ts', '.tsx'];
+      const extensions = ['.jsx', '.tsx'];
       let resolvedPath = null;
       
       for (const ext of extensions) {
@@ -195,10 +187,3 @@ function buildComponentTree(filePath, baseDir) {
  */
 
 module.exports = { buildComponentTree };
-
-// Example usage:
-// const baseDir = './client';  // The base directory containing your components
-// const entryFile = './src/components/App.jsx';  // The entry point of your component tree
-
-// const tree = buildComponentTree(entryFile, baseDir);
-// console.log(JSON.stringify(tree, null, 2));
