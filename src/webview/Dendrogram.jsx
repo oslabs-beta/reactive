@@ -38,10 +38,11 @@ const Dendrogram = ({ data }) => {
         .nodeSize([100, 200])
         .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // define tree dimensions 
       const root = d3.hierarchy(data); // create hierarchy based on passed in data
+      root.descendants().forEach((d) => (d._children = d.children))
       const links = tree(root).links(); // create dendrogram links
       const nodes = root.descendants();
 
-      const zoom = d3.zoom().scaleExtent([0.5, 3]).on("zoom", redraw);
+      const zoom = d3.zoom().scaleExtent([0.5, 15]).on("zoom", redraw);
       svg.call(zoom);
 
       const g = svg.append("g"); // The group that holds everything (nodes + links)
