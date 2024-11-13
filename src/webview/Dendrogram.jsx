@@ -37,9 +37,13 @@ const Dendrogram = ({ data }) => {
       const tree = d3.tree().size([height, width - 100])
         .nodeSize([100, 200])
         .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // define tree dimensions 
+      
       const root = d3.hierarchy(data); // create hierarchy based on passed in data
+      
       root.descendants().forEach((d) => (d._children = d.children))
+      
       const links = tree(root).links(); // create dendrogram links
+      
       const nodes = root.descendants();
 
       const zoom = d3.zoom().scaleExtent([0.5, 15]).on("zoom", redraw);
@@ -75,9 +79,14 @@ const Dendrogram = ({ data }) => {
         });
         
       // append circles to nodes
-      node.append("circle")
-        .attr("r", 40)
-        .style("fill", "yellow"); // pass in func as second arg to conditionally render diff color
+      node.append("rect")
+          .attr("x", -40)
+          .attr("y", -20)
+          .attr("width", 80)
+          .attr("height", 55)
+          .attr("rx", 10)
+          .attr("ry", 10)
+          .style("fill", "yellow"); // pass in func as second arg to conditionally render diff color
 
       // append text to nodes
       node.append("text")
