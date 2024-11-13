@@ -34,8 +34,10 @@ const Dendrogram = ({ data }) => {
       const height = 1000 - margin.top - margin.bottom;
 
       // create tree 
-      const tree = d3.tree().size([height, width - 100]); // define tree dimensions 
-      const root = d3.hierarchy(dummyData); // create hierarchy based on passed in data
+      const tree = d3.tree().size([height, width - 100])
+        .nodeSize([100, 200])
+        .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // define tree dimensions 
+      const root = d3.hierarchy(data); // create hierarchy based on passed in data
       const links = tree(root).links(); // create dendrogram links
       const nodes = root.descendants();
 

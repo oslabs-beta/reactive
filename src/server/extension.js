@@ -96,7 +96,7 @@ function activate(context) {
           <title>Component Tree</title>
       </head>
       <body>
-        <h1>Sup Fellas!</h1>
+        <h1>Reactive</h1>
         <div id="root"></div>
           <div id="dendrogram"></div>
           

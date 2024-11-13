@@ -53,7 +53,7 @@ const Dendrogram = ({ data }) => {
             const height = 1000 - margin.top - margin.bottom;
             // create tree 
             const tree = d3.tree().size([height, width - 100]); // define tree dimensions 
-            const root = d3.hierarchy(dummyData); // create hierarchy based on passed in data
+            const root = d3.hierarchy(data); // create hierarchy based on passed in data
             const links = tree(root).links(); // create dendrogram links
             const nodes = root.descendants();
             const zoom = d3.zoom().scaleExtent([0.5, 3]).on("zoom", redraw);
