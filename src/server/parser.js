@@ -17,13 +17,6 @@ function parseFileToAST(filePath) {
   });
 }
 
-// //Helper function to get component type (class or function)
-// function getComponentType(node) {
-//   if (node.type === 'ClassDeclaration') return 'class';
-//   if (node.type === 'FunctionDeclaration' || node.type === 'ArrowFunctionExpression') return 'functional';
-//   return 'unknown';
-// }
-
 // Helper function to get component name from an AST node
 function getComponentName(node) {
   if (node.id && node.id.name) return node.id.name;  // For function or class components
