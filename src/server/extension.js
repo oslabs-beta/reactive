@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const { buildComponentTree } = require('./parser.js');
 
+let appName;
+
 // Activate the extension, setting up command listeners
 function activate(context) {
   let treeObj;
@@ -56,7 +58,7 @@ function activate(context) {
           }
         }, undefined, context.subscriptions)
       
-      panel.webview.html = getWebviewContent(webviewJsUri, treeObj);
+      panel.webview.html = getWebviewContent(appName, webviewJsUri, treeObj);
       });
     context.subscriptions.push(renderReact);
   }
@@ -86,7 +88,7 @@ function activate(context) {
     }
   });
 
-  function getWebviewContent(uri, obj) {
+  function getWebviewContent(name, uri, obj) {
     return (`
       <!DOCTYPE html>
       <html lang="en">
@@ -96,7 +98,7 @@ function activate(context) {
           <title>Component Tree</title>
       </head>
       <body>
-        <h1>Sup Fellas!</h1>
+        <h1>Reactive</h1>
         <div id="root"></div>
           <div id="dendrogram"></div>
           

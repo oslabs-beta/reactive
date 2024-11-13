@@ -43,111 +43,93 @@ window.addEventListener("message", event => {
     }
 });
 const Dendrogram = ({ data }) => {
-    //console.log("inside dendrogram. this is the passed in data: ", data); // logs
     const svgRef = (0, react_1.useRef)();
     (0, react_1.useEffect)(() => {
         if (svgRef.current) {
-            const svg = d3.select(svgRef.current); // create SVG element
+            const svg = d3.select(svgRef.current);
             const margin = { top: 50, right: 20, bottom: 20, left: 20 };
             const width = 600 - margin.left - margin.right;
             const height = 1000 - margin.top - margin.bottom;
-            // create tree 
-            const tree = d3.tree().size([height, width - 100]); // define tree dimensions 
-            const root = d3.hierarchy(data); // create hierarchy based on passed in data
-            const links = tree(root).links(); // create dendrogram links
-            const nodes = root.descendants();
+            const tree = d3.tree().size([height, width - 100])
+                .nodeSize([100, 200])
+                .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
+            const root = d3.hierarchy(data);
+            root.descendants().forEach((d) => (d._children = d.children));
             const zoom = d3.zoom().scaleExtent([0.5, 3]).on("zoom", redraw);
             svg.call(zoom);
-            const g = svg.append("g"); // The group that holds everything (nodes + links)
-            g.selectAll(".link")
-                .data(links)
-                .enter()
-                .append("path")
-                .attr("class", "link")
-                .attr("d", d3.linkVertical().x((d) => d.x).y((d) => d.y));
-            // create dendrogram nodes
-            const node = g
-                .selectAll(".node")
-                .data(nodes)
-                .enter()
-                .append("g")
-                .attr("class", "node")
-                .attr("transform", (d) => `translate(${d.x},${d.y})`)
-                .on("click", (event, d) => {
-                // Toggle children on click
-                if (d.children) {
-                    d._children = d.children;
-                    d.children = null;
-                }
-                else {
-                    d.children = d._children;
-                    d._children = null;
-                }
-                update(root); // Re-render the tree after toggling
-            });
-            // append rectangles to nodes
-            node.append("rect")
-                .attr("x", -40) // Center the rectangle horizontally
-                .attr("y", -20) // Center the rectangle vertically
-                .attr("width", 80) // Set width
-                .attr("height", 40) // Set height
-                .attr("rx", 10) // Rounded corner x-radius
-                .attr("ry", 10) // Rounded corner y-radius
-                .style("fill", "yellow"); // Background color for the rectangle
-            // Append text to nodes
-            node.append("text")
-                .attr("dy", ".31em")
-                .attr("text-anchor", "middle")
-                .text((d) => d.data.file)
-                .style("fill", "blue");
-            // node.append("text")
-            // .attr("dy", ".31em")
-            // .attr("text-anchor", "end") // centers text in node - TODO: update positioning of text 
-            // // .attr("x", d => d.children ? -8 : 8)
-            // // .style("text-anchor", d => d.children ? "end" : "start")
-            // .text((d) => d.data.type) 
-            // .style("fill", "blue");
-            // Update function to handle re-rendering of the tree (for collapsibility)
-            function update(root) {
-                tree(root); // Update tree layout
-                const nodes = g.selectAll(".node").data(root.descendants(), (d) => d.data.file);
-                // Enter new nodes
-                const nodeEnter = nodes.enter().append("g").attr("class", "node").attr("transform", (d) => `translate(${d.x},${d.y})`);
-                nodeEnter.append("circle").attr("r", 40).style("fill", "yellow");
-                nodeEnter
-                    .append("text")
-                    .attr("dy", ".31em")
+            const g = svg.append("g");
+            function update(source) {
+                // Recompute the layout
+                tree(root);
+                const nodes = root.descendants();
+                const links = root.links();
+                // Render links
+                const link = g.selectAll(".link")
+                    .data(links, d => d.source.data.file + "-" + d.target.data.file);
+                link.enter().append("path")
+                    .attr("class", "link")
+                    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y))
+                    .merge(link)
+                    .transition().duration(750)
+                    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+                link.exit().remove();
+                // Render nodes
+                const node = g.selectAll(".node")
+                    .data(nodes, d => d.data.file);
+                const nodeEnter = node.enter().append("g")
+                    .attr("class", "node")
+                    .attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
+                    .on("click", (event, d) => {
+                    d.children = d.children ? null : d._children;
+                    update(d);
+                });
+                // Rectangle for each node
+                nodeEnter.append("rect")
+                    .attr("x", -40)
+                    .attr("y", -20)
+                    .attr("width", 80)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("ry", 10)
+                    .style("fill", "yellow");
+                nodeEnter.append("text")
+                    .attr("y", -5)
                     .attr("text-anchor", "middle")
                     .text((d) => d.data.file)
                     .style("fill", "blue");
-                // Transition nodes
-                nodes.transition().duration(750).attr("transform", (d) => `translate(${d.x},${d.y})`);
-                // Remove exiting nodes
-                nodes.exit().remove();
-                // Update links
-                const link = g
-                    .selectAll(".link")
-                    .data(root.links(), (d) => d.source.data.file + "-" + d.target.data.file);
-                link.enter()
-                    .append("path")
-                    .attr("class", "link")
-                    .attr("d", (d) => {
-                    const o = { x: d.source.x, y: d.source.y }; // Temporary placeholder for links
-                    return d3.linkVertical().x((d) => d.x).y((d) => d.y)({ source: o, target: o });
-                })
-                    .transition()
-                    .duration(750)
-                    .attr("d", (d) => d3.linkVertical().x((d) => d.x).y((d) => d.y)(d));
-                // Transition links
-                link.transition().duration(750).attr("d", (d) => d3.linkVertical().x((d) => d.x).y((d) => d.y)(d));
-                // Remove exiting links
-                link.exit().remove();
+                // Append text for component type below file name
+                nodeEnter.append("text")
+                    .attr("y", 10) // Adjust vertical position to be below the file name
+                    .attr("text-anchor", "middle")
+                    .text((d) => `${d.data.type}`)
+                    .style("fill", "green");
+                // Append text for state below component type
+                nodeEnter.append("text")
+                    .attr("y", 25) // Further down to avoid overlap
+                    .attr("text-anchor", "middle")
+                    .text((d) => `State: [${d.data.state.length ? d.data.state.join(", ") : "None"}]`)
+                    .style("fill", "purple")
+                    .on("click", (event, d) => {
+                    // Create or toggle the floating node with array values when clicked
+                    const stateNode = svg.append("g")
+                        .attr("class", "stateNode")
+                        .attr("transform", `translate(${d.x + 100},${d.y - 40})`);
+                });
+                const nodeUpdate = nodeEnter.merge(node);
+                nodeUpdate.transition().duration(750)
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+                nodes.forEach(d => {
+                    d.x0 = d.x;
+                    d.y0 = d.y;
+                });
+                node.exit().transition().duration(750)
+                    .attr("transform", d => `translate(${source.x},${source.y})`)
+                    .remove();
             }
-            // Handle zoom behavior
             function redraw(event) {
-                // Apply the zoom transformation to the entire <g> element that holds the nodes and links
                 g.attr("transform", event.transform);
             }
+            update(root);
         }
     }, [data]);
     return (react_1.default.createElement("svg", { ref: svgRef, width: "1400", height: "700", viewBox: "-70 -50 1400 700" },
@@ -158,11 +140,12 @@ const Dendrogram = ({ data }) => {
           stroke-opacity: 0.4;
           stroke-width: 1.5px;
         }
-        .node circle {
-          fill: white;
+        .node rect {
+          fill: yellow;
         }
         .node text {
           font-size: 12px;
+          fill: blue;
         }
       `)));
 };
