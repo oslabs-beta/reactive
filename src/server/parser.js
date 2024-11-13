@@ -144,7 +144,7 @@ function buildComponentTree(filePath, baseDir) {
       
       // LEVEL 1: Resolution Failures 
       if (!resolvedPath) {
-        console.warn(`Warning: No matching file found for import, importPath: ${importPath}`);
+        // console.warn(`Warning: No matching file found for import, importPath: ${importPath}`);
         return null;
       }
 

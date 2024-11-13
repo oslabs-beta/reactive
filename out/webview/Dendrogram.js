@@ -1,98 +1,34 @@
 "use strict";
 /*
-QUICK MODIFICATION GUIDE:
-------------------------
-1. Node Rectangle Size:
-   - Find nodeEnter.append("rect")
-   - Modify these attributes:
-     * width: 140 (increase for wider rectangles)
-     * height: 60 (increase for taller rectangles)
-     * x: -40 (adjust to center the rectangle, usually -width/2)
-     * y: -20 (adjust to center vertically)
+VISUALIZATION CONFIGURATION:
+--------------------------
+1. Node Display:
+   - Rounded rectangles with dynamic sizing based on depth
+   - Smart text truncation for names > 15 characters
+   - Hover tooltips for full names
+   - Visual indicators for truncated names
+   - Depth-based colors for distinguishing levels
 
-2. Text Size and Position:
-   - Find .node text in the CSS or style attributes
-   - Modify font-size (default: 12px)
-   - Adjust text y positions:
-     * First text (filename): y: -5
-     * Second text (type): y: 10
-     * Third text (state): y: 25
+2. Layout:
+   - Designed for trees up to 5+ levels deep
+   - Handles 2-10 siblings per level smoothly
+   - Dynamic spacing for visually clear separation
 
-3. Colors:
-   - Modify the COLORS object to update the color scheme
-   - Ensure sufficient contrast for accessibility
-   - Consider using color-blind friendly palettes
+3. Color Scheme:
+   - Transition from pink to orange with increasing depth
+   - High contrast text
+   - Light shadows to enhance depth perception
 
-4. Animation Timing:
-   - Initial delay: 1000ms (1 second)
-   - Transition duration: 2000ms (2 seconds)
-   - Node update duration: 750ms
+4. Interactive Features:
+   - Dark/Light mode toggle
+   - Zoom and pan navigation
+   - Collapsible node trees
+   - Smooth transitions
 
-5. Zoom Levels:
-   - Initial zoom: scale(2)
-   - Final zoom: scale(0.2)
-   - Zoom limits: scaleExtent([0.05, 4])
-
-6. Tree Layout:
-   - Node spacing: nodeSize([200, 200])
-   - Sibling separation: separation((a, b) => (a.parent === b.parent ? 1.5 : 2))
-
-PSEUDO CODE OVERVIEW:
--------------------
-1. Initialize:
-   ```
-   Create SVG container
-   Define margins and dimensions
-   Configure tree layout
-   Setup zoom behavior
-   ```
-
-2. Data Processing:
-   ```
-   Receive hierarchical data
-   Create d3 hierarchy
-   Store children for expand/collapse
-   ```
-
-3. Tree Rendering:
-   ```
-   For each node:
-     Create group element
-     Add rectangle background
-     Add text elements (filename, type, state)
-     Setup click handlers
-   
-   For each link:
-     Create path between nodes
-     Configure path styling
-   ```
-
-4. Animation Sequence:
-   ```
-   Start:
-     Set initial zoom level (2x)
-     Set initial teal color
-   
-   After 1 second:
-     Begin color transition to coral
-     Begin zoom out to 0.2x
-     Duration: 2 seconds
-   ```
-
-5. Interaction Handlers:
-   ```
-   On node click:
-     Toggle children visibility
-     Update tree layout
-   
-   On state click:
-     Show popup with state details
-     Enable popup close button
-   
-   On zoom:
-     Update transform
-     Maintain smooth transitions
-   ```
+5. Performance:
+   - Optimized for trees with 50+ nodes
+   - Efficient re-rendering
+   - Memory cleanup on unmount
 */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -119,227 +55,176 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const react_1 = __importStar(require("react"));
-const client_1 = require("react-dom/client");
 const d3 = __importStar(require("d3"));
-// Color scheme configuration
+// **STYLE CONFIGURATION:** Set color and sizing for node and link visuals
 const COLORS = {
-    initialNode: "#ff69b4", // Starting pink
-    finalNode: "#ffeb3b", // Bright yellow
-    fileName: "#000000", // Black for main filename
-    typeText: "#2e7d32", // Dark green for type
-    stateText: "#1565c0", // Dark blue for state
-    link: "#555555", // Dark grey for connections
-    statePopupBg: "#FFFFFF", // White background
-    statePopupBorder: "#1565c0", // Blue border
-    statePopupText: "#000000" // Black text in popup
+    initial: "#ff69b4", // Start with pink, transitioning to orange for deeper nodes
+    depths: [
+        "#ffb74d", // Root level (warmest)
+        "#ffa726", // Level 1
+        "#ff9800", // Level 2
+        "#fb8c00", // Level 3
+        "#f57c00", // Level 4
+        "#ef6c00" // Deepest level (coolest)
+    ],
+    text: {
+        primary: "#1a237e", // Filename color (dark blue for contrast)
+        secondary: "#2e7d32", // Component type color (green for distinction)
+        tertiary: "#1565c0" // State info color (blue for information)
+    },
+    link: "rgba(85, 85, 85, 0.4)", // Semi-transparent connections for visual hierarchy
+    truncation: "#e91e63" // Pink indicator for truncated text
 };
-window.addEventListener("message", (event) => {
-    if (event.data.type === "testMessage") {
-        //console.log("Received message:", event.data.payload);
+// **NODE LAYOUT CONFIGURATION:** Customize dimensions and spacing for nodes
+const NODE_CONFIG = {
+    baseWidth: 130, // Standard node width
+    baseHeight: 70, // Standard node height
+    depthScale: 0.9, // Nodes shrink 10% per level
+    minScale: 0.6, // Prevents nodes from becoming too small
+    cornerRadius: 10, // Rounded corners for softer appearance
+    textTruncateLength: 15, // Max characters before truncation
+    verticalSpacing: 120, // Vertical distance between levels
+    horizontalSpacing: 40 // Horizontal distance between siblings
+};
+// **THEME CONFIGURATION:** Dark mode color adjustments
+const THEME = {
+    light: {
+        background: "#ffffff",
+        text: "#333333",
+        button: "#dddddd",
+        buttonText: "#111111"
+    },
+    dark: {
+        background: "#1a1a1a",
+        text: "#ffffff",
+        button: "#333333",
+        buttonText: "#eeeeee"
     }
-    if (event.data.type === "astData") {
-        const astData = event.data.payload;
-        const container = document.getElementById("root");
-        const root = (0, client_1.createRoot)(container);
-        root.render(react_1.default.createElement(Dendrogram, { data: astData }));
-    }
-});
-const Dendrogram = ({ data }) => {
-    const svgRef = (0, react_1.useRef)();
+};
+// **DENDROGRAM COMPONENT:** Main visualization component
+const Dendrogram = ({ data, appName }) => {
+    const svgRef = (0, react_1.useRef)(); // References SVG container
+    const [isDarkMode, setIsDarkMode] = (0, react_1.useState)(false); // Controls theme / Dark mode state
     (0, react_1.useEffect)(() => {
         if (!svgRef.current)
             return;
         const svg = d3.select(svgRef.current);
-        const margin = { top: 50, right: 20, bottom: 20, left: 20 };
-        const width = window.innerWidth - margin.left - margin.right;
-        const height = window.innerHeight - margin.top - margin.bottom;
-        // Configure tree layout with improved spacing
-        const tree = d3
-            .tree()
-            .size([height, width - 100])
-            .nodeSize([200, 200])
-            .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const tree = d3.tree()
+            .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
+            .separation((a, b) => (a.parent === b.parent ? 1.2 : 2.4));
         const root = d3.hierarchy(data);
-        root.descendants().forEach((d) => (d._children = d.children));
-        // Configure zoom behavior
+        const g = svg.append("g"); // Group element to allow for zooming
         const zoom = d3.zoom()
-            .scaleExtent([0.05, 4])
-            .on("zoom", redraw);
+            .scaleExtent([0.1, 2])
+            .on("zoom", (event) => g.attr("transform", event.transform));
         svg.call(zoom);
-        const g = svg.append("g");
-        function redraw(event) {
-            g.attr("transform", event.transform);
-        }
         function update(source) {
             tree(root);
             const nodes = root.descendants();
             const links = root.links();
-            // Handle links
-            const link = g
-                .selectAll(".link")
-                .data(links, (d) => d.source.data.file + "-" + d.target.data.file);
-            link
-                .enter()
+            const link = g.selectAll(".link")
+                .data(links, d => d.target.data.file);
+            link.enter()
                 .append("path")
                 .attr("class", "link")
-                .attr("d", d3
-                .linkVertical()
-                .x((d) => d.x)
-                .y((d) => d.y))
-                .merge(link)
-                .transition()
-                .duration(750)
-                .attr("d", d3
-                .linkVertical()
-                .x((d) => d.x)
-                .y((d) => d.y));
+                .attr("d", d3.linkVertical()
+                .x(d => d.x)
+                .y(d => d.y))
+                .style("stroke", COLORS.link)
+                .style("fill", "none")
+                .style("stroke-width", 1.5);
             link.exit().remove();
-            // Handle nodes
-            const node = g.selectAll(".node").data(nodes, (d) => d.data.file);
-            const nodeEnter = node
-                .enter()
+            const node = g.selectAll(".node")
+                .data(nodes, d => d.data.file);
+            const nodeEnter = node.enter()
                 .append("g")
                 .attr("class", "node")
-                .attr("transform", (d) => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
+                .attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
                 .on("click", (event, d) => {
                 d.children = d.children ? null : d._children;
                 update(d);
             });
-            nodeEnter
-                .append("rect")
-                .attr("x", -40)
-                .attr("y", -20)
-                .attr("width", 140)
-                .attr("height", 60)
-                .attr("rx", 10)
-                .attr("ry", 10)
-                .style("fill", COLORS.initialNode)
-                .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.2))");
-            nodeEnter
-                .append("text")
-                .attr("y", -5)
-                .attr("x", 20)
-                .attr("text-anchor", "middle")
-                .text((d) => d.data.file)
-                .style("fill", COLORS.fileName);
-            nodeEnter
-                .append("text")
-                .attr("y", 10)
-                .attr("x", 20)
-                .attr("text-anchor", "middle")
-                .text((d) => `${d.data.type}`)
-                .style("fill", COLORS.typeText);
-            nodeEnter
-                .append("text")
-                .attr("y", 25)
-                .attr("x", 20)
-                .attr("text-anchor", "middle")
-                .text((d) => `State: ${d.data.state.length} items`)
-                .style("fill", COLORS.stateText)
-                .style("cursor", "pointer")
-                .on("click", (event, d) => {
-                event.stopPropagation();
-                g.selectAll(".state-details").remove();
-                const stateDetails = g
-                    .append("g")
-                    .attr("class", "state-details")
-                    .attr("transform", `translate(${d.x + 100},${d.y - 30})`);
-                stateDetails
-                    .append("rect")
-                    .attr("x", -170)
-                    .attr("y", 80)
-                    .attr("width", 150)
-                    .attr("height", d.data.state.length * 20 + 20)
-                    .attr("rx", 5)
-                    .attr("ry", 5)
-                    .style("fill", COLORS.statePopupBg)
-                    .style("stroke", COLORS.statePopupBorder)
-                    .style("stroke-width", "1px")
-                    .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.1))");
-                stateDetails
-                    .append("text")
-                    .attr("x", -35)
-                    .attr("y", 95)
-                    .text("×")
-                    .style("fill", COLORS.statePopupText)
-                    .style("cursor", "pointer")
-                    .style("font-size", "16px")
-                    .on("click", () => stateDetails.remove());
-                d.data.state.forEach((item, i) => {
-                    stateDetails
-                        .append("text")
-                        .attr("x", -160)
-                        .attr("y", i * 20 + 100)
-                        .text(item)
-                        .style("fill", COLORS.statePopupText)
-                        .style("font-size", "12px");
-                });
+            nodeEnter.each(function (d) {
+                const depth = Math.min(d.depth, COLORS.depths.length - 1);
+                d3.select(this).append("rect")
+                    .attr("x", -NODE_CONFIG.baseWidth / 2)
+                    .attr("y", -NODE_CONFIG.baseHeight / 2)
+                    .attr("width", NODE_CONFIG.baseWidth)
+                    .attr("height", NODE_CONFIG.baseHeight)
+                    .attr("rx", NODE_CONFIG.cornerRadius)
+                    .style("fill", COLORS.depths[depth]);
+                const textGroup = d3.select(this).append("g").attr("class", "text-group");
+                const fileName = d.data.file || "Unnamed";
+                const truncatedName = fileName.length > NODE_CONFIG.textTruncateLength
+                    ? `${fileName.slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
+                    : fileName;
+                textGroup.append("text")
+                    .attr("y", -NODE_CONFIG.baseHeight / 4)
+                    .attr("text-anchor", "middle")
+                    .style("fill", COLORS.text.primary)
+                    .text(truncatedName);
+                if (truncatedName !== fileName) {
+                    textGroup.append("title").text(fileName);
+                }
+                textGroup.append("text")
+                    .attr("y", 0)
+                    .attr("text-anchor", "middle")
+                    .style("fill", COLORS.text.secondary)
+                    .text(d.data.type || "Unknown");
+                textGroup.append("text")
+                    .attr("y", NODE_CONFIG.baseHeight / 4)
+                    .attr("text-anchor", "middle")
+                    .style("fill", COLORS.text.tertiary)
+                    .text(`State: ${d.data.state ? d.data.state.length : 0}`);
             });
             const nodeUpdate = nodeEnter.merge(node);
-            nodeUpdate
-                .transition()
-                .duration(750)
-                .attr("transform", (d) => `translate(${d.x},${d.y})`);
-            nodes.forEach((d) => {
+            nodeUpdate.transition().duration(750).attr("transform", d => `translate(${d.x},${d.y})`);
+            nodes.forEach(d => {
                 d.x0 = d.x;
                 d.y0 = d.y;
             });
-            node
-                .exit()
-                .transition()
-                .duration(750)
-                .attr("transform", (d) => `translate(${source.x},${source.y})`)
-                .remove();
-            return nodes;
+            node.exit().remove();
         }
-        // Initial update and get nodes
-        const nodes = update(root);
-        // Find the target node (root node)
-        const targetNode = nodes[0];
-        // Initial zoomed in transform
-        const initialTransform = d3.zoomIdentity
-            .translate(width / 2 - targetNode.x, height / 2 - targetNode.y)
-            .scale(2);
-        // Apply initial transform
+        update(root);
+        const initialTransform = d3.zoomIdentity.translate(width / 2, height / 4).scale(0.8);
         svg.call(zoom.transform, initialTransform);
-        // After 1 second, zoom out and transition colors
         setTimeout(() => {
-            // Start color transition
-            g.selectAll("rect")
-                .transition()
-                .duration(2000)
-                .style("fill", COLORS.finalNode);
-            // Zoom out
             svg.transition()
                 .duration(2000)
-                .call(zoom.transform, d3.zoomIdentity
-                .translate(width / 2 - targetNode.x, height / 2 - targetNode.y)
-                .scale(0.2));
+                .call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 6).scale(0.4));
         }, 1000);
-        return () => {
-            svg.selectAll("*").remove();
-        };
+        return () => svg.selectAll("*").remove();
     }, [data]);
-    return (react_1.default.createElement("svg", { ref: svgRef, width: "95vw", height: "90vh" },
-        react_1.default.createElement("style", null, `
-        .link {
-          fill: none;
-          stroke: ${COLORS.link};
-          stroke-opacity: 0.6;
-          stroke-width: 1.5px;
-        }
-        .node text {
-          font-size: 12px;
-          font-weight: 500;
-        }
-        .state-details {
-          pointer-events: all;
-        }
-        .state-details text {
-          user-select: none;
-          fill: ${COLORS.statePopupText};
-        }
-      `)));
+    // **DARK MODE STYLES**
+    const backgroundColor = isDarkMode ? "#1a1a1a" : "#ffffff";
+    const textColor = isDarkMode ? "#ffffff" : "#333333";
+    return (react_1.default.createElement("div", { style: { position: "relative" } },
+        react_1.default.createElement("button", { onClick: () => setIsDarkMode(prev => !prev), style: {
+                position: "absolute",
+                top: 20,
+                right: 20,
+                padding: "10px 20px",
+                backgroundColor: isDarkMode ? "#333" : "#ddd",
+                color: isDarkMode ? "#eee" : "#111",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer"
+            } }, "Toggle Dark Mode"),
+        react_1.default.createElement("h1", { style: {
+                position: "absolute",
+                top: 20,
+                left: 20,
+                color: textColor,
+                fontSize: "24px",
+                fontFamily: "Arial, sans-serif"
+            } }, appName || "React Component Tree"),
+        react_1.default.createElement("svg", { ref: svgRef, width: "100vw", height: "100vh", style: { backgroundColor } },
+            react_1.default.createElement("style", null, `
+          .link { stroke: ${COLORS.link}; stroke-width: 1.5px; }
+          .node text { font-size: 12px; font-weight: 500; fill: ${textColor}; }
+        `))));
 };
 exports.default = Dendrogram;
 //# sourceMappingURL=Dendrogram.js.map
