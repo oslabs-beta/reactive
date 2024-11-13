@@ -1,106 +1,29 @@
-// TODO for Micah to build out
-
+// //console.log("Inside Dendrogram at top")
 import React, { useRef, useEffect } from "react";
+import { createRoot } from "react-dom/client";
 import * as d3 from "d3";
 
+window.addEventListener("message", event => {
+  //console.log("I hear an event!"); // logs
+  //console.log("event.data.type: " + event.data.type);
 
+  if (event.data.type === "testMessage") {
+    //console.log("Received message:", event.data.payload); // logs
+  }
 
-const dummyData = {
-  "file": "App.jsx",
-  "type": "functional",
-  "state": [],
-  "children": [
-    {
-      "file": "Nav.jsx",
-      "type": "functional",
-      "state": [],
-      "children": []
-    },
-    {
-      "file": "Home.jsx",
-      "type": "functional",
-      "state": [],
-      "children": []
-    },
-    {
-      "file": "Search.jsx",
-      "type": "functional",
-      "state": [],
-      "children": [
-        {
-          "file": "InputForm.jsx",
-          "type": "functional",
-          "state": [],
-          "children": []
-        },
-        {
-          "file": "ShowImages.jsx",
-          "type": "functional",
-          "state": [],
-          "children": []
-        }
-      ]
-    },
-    {
-      "file": "Login.jsx",
-      "type": "functional",
-      "state": [],
-      "children": []
-    },
-    {
-      "file": "SignUp.jsx",
-      "type": "functional",
-      "state": [],
-      "children": []
-    },
-    {
-      "file": "About.jsx",
-      "type": "functional",
-      "state": [],
-      "children": []
-    },
-    {
-      "file": "Background.jsx",
-      "type": "functional",
-      "state": [],
-      "children": []
-    },
-    {
-      "file": "SecretCloset.jsx",
-      "type": "functional",
-      "state": [],
-      "children": []
-    },
-    {
-      "file": "Upload.jsx",
-      "type": "functional",
-      "state": [],
-      "children": [
-        {
-          "file": "ImageForm.jsx",
-          "type": "functional",
-          "state": [],
-          "children": []
-        },
-        {
-          "file": "ShowImages.jsx",
-          "type": "functional",
-          "state": [],
-          "children": []
-        },
-        {
-          "file": "KidPix.jsx",
-          "type": "functional",
-          "state": [],
-          "children": []
-        }
-      ]
-    }
-  ]
-};
+  if (event.data.type === "astData") {
+    //console.log("astData: " + event.data.payload); // logs
+    const astData = event.data.payload;
 
+    // Use createRoot to render the Dendrogram component
+    const container = document.getElementById("root");
+    const root = createRoot(container); // Create root once, ideally at the start of the app
+    root.render(<Dendrogram data={astData} />);
+  }
+});
 
-const Dendrogram = () => {
+const Dendrogram = ({ data }) => {
+  //console.log("inside dendrogram. this is the passed in data: ", data); // logs
   const svgRef = useRef();
 
   useEffect(() => {
@@ -224,7 +147,7 @@ const Dendrogram = () => {
         g.attr("transform", event.transform);
       }
     }
-  }, []);
+  }, [data]);
 
   return (
     <svg ref={svgRef} width="1400" height="700" viewBox="-70 -50 1400 700">

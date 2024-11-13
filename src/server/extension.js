@@ -1,87 +1,65 @@
 const vscode = require('vscode');
+const fs = require('fs');
 const path = require('path');
 const { buildComponentTree } = require('./parser.js');
 
 // Activate the extension, setting up command listeners
 function activate(context) {
-  
+  let treeObj;
+  let tree;
   /**
    * Render the React application in a Webview.
    * This function creates a new Webview panel and displays an HTML page
    * that loads a React app script from the extension's dist folder.
    */
-  const renderReact = vscode.commands.registerCommand('reactive.renderReact', () => {
-    const panel = vscode.window.createWebviewPanel(
-      'reactWebview',            // Internal identifier for the webview
-      'React App',               // Title of the webview panel
-      vscode.ViewColumn.One,     // Column to show the webview in
-      {
-        enableScripts: true,     // Allow JavaScript execution in the webview
-        localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'dist'))]
-      }
-    );
-
-    // Path to the webview's JavaScript file
-    const webviewJsPath = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'));
-    const webviewJsUri = panel.webview.asWebviewUri(webviewJsPath);
-
-    // HTML content for the webview
-    panel.webview.html = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>React Component Tree</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-          }
-        </style>
-      </head>
-      <body>
-        <div id="root"></div>
-        <script src="${webviewJsUri}"></script>
-      </body>
-      </html>
-    `;
-  });
-
-  /**
-   * Build and render the React component tree in a Webview.
-   * Prompts the user to select a file, builds the component tree, and renders it in a new webview.
-   */
-  const buildAndRenderComponentTree = vscode.commands.registerCommand('reactive.reactWebviewTree', async () => {
+  const renderReact = vscode.commands.registerCommand('reactive.renderReact', async () => {
+    let appName = ""
     const options = {
       canSelectMany: false,
       openLabel: 'Select topmost parent component',
       filters: {
         'Accepted Files': ['js', 'jsx', 'ts', 'tsx']
       }
-    };
+      };
 
     const fileUri = await vscode.window.showOpenDialog(options);
     if (fileUri && fileUri[0]) {
       const filePath = fileUri[0].fsPath;
       const baseDir = path.dirname(filePath);
-      const tree = buildComponentTree(filePath, baseDir);
-
+      appName = path.parse(filePath).base;
+      tree = buildComponentTree(filePath, baseDir);
+      treeObj = JSON.stringify(tree, null, 2)
+    }
+    
       const panel = vscode.window.createWebviewPanel(
-        'componentTreeWebview',
-        'Component Tree',
-        vscode.ViewColumn.One,
+        'dendrogram',
+        `Component Tree Built From ${appName}`,               // Title of the webview panel
+        vscode.ViewColumn.One,     // Column to show the webview in
         {
-          enableScripts: true
+          enableScripts: true,     // Allow JavaScript execution in the webview
+          localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'dist'))],
+          retainContextWhenHidden: true,
         }
       );
+      const webviewJsPath = vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'));
+      const webviewJsUri = panel.webview.asWebviewUri(webviewJsPath);
 
-      // Renders the tree structure inside the webview
-      panel.webview.html = getWebviewContent(tree);
-    }
-  });
+      panel.webview.postMessage({ type: 'testMessage', payload: 'Hello from extension!' }).then(console.log("posted test")); //this logs
 
+      panel.webview.onDidReceiveMessage(
+        async message => {
+          //console.log("message type: " + message.type) // this logs
+          if(message.type === 'onData'){
+            console.log("message value: " + message.value); // this logs
+            context.workspaceState.update('renderReact', message.value)
+            panel.webview.postMessage({type: 'astData', payload: message.value, settings: vscode.workspace.getConfiguration('renderReact')}).then(console.log("posted actual")); //this logs, which I believe only works if the message contents are valid. otherwise, may need to use this instead of 'tree' -> 
+          }
+        }, undefined, context.subscriptions)
+      
+      panel.webview.html = getWebviewContent(webviewJsUri, treeObj);
+      });
+    context.subscriptions.push(renderReact);
+  }
   /**
    * Display the React component tree in the Output channel.
    * Prompts the user to select a file, builds the component tree, and displays it in the VSCode Output panel.
@@ -108,64 +86,38 @@ function activate(context) {
     }
   });
 
-  // Register all the commands to the context, so VSCode can activate them
-  context.subscriptions.push(makeComponentTree, renderReact, buildAndRenderComponentTree);
-}
+  function getWebviewContent(uri, obj) {
+    return (`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Component Tree</title>
+      </head>
+      <body>
+        <h1>Sup Fellas!</h1>
+        <div id="root"></div>
+          <div id="dendrogram"></div>
+          
+            <script src="https://d3js.org/d3.v7.min.js"></script>
 
-/**
- * Helper function to generate the HTML content for displaying the component tree.
- * @param {Object} tree - The React component tree object
- */
-function getWebviewContent(tree) {
-  return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Component Tree</title>
-        <style>
-            body { font-family: Arial, sans-serif; }
-            ul { list-style-type: none; }
-            li { margin: 10px 0; }
-            .file { font-weight: bold; }
-        </style>
-    </head>
-    <body>
-        <h1>Component Tree</h1>
-        ${renderTree(tree)}
-        <script>
-            const toggles = document.querySelectorAll('.toggle');
-            toggles.forEach(toggle => {
-                toggle.addEventListener('click', () => {
-                    const content = toggle.nextElementSibling;
-                    content.style.display = content.style.display === 'none' ? 'block' : 'none';
+            <script>
+              const vscode = acquireVsCodeApi();
+              window.onload = () => {
+                vscode.postMessage({
+                  type: 'onData',
+                  value: ${obj}
                 });
-            });
-        </script>
-    </body>
-    </html>
-  `;
-}
+              };
+          </script>
 
-/**
- * Recursive function to render the React component tree into HTML list elements.
- * @param {Object} node - A node in the React component tree
- * @returns {String} - The HTML string representing the tree
- */
-function renderTree(node) {
-  if (!node) return '';
-  let html = `<li>
-    <span class="file">${node.file}</span>
-    ${node.children && node.children.length ? `
-      <button class="toggle">Toggle</button>
-      <ul style="display: none;">
-        ${node.children.map(child => renderTree(child)).join('')}
-      </ul>
-    ` : ''}
-  </li>`;
-  return html;
-}
+          <script src=${uri}></script>
+
+      </body>
+      </html>
+    `);
+  }
 
 // Deactivate the extension
 function deactivate() {}
