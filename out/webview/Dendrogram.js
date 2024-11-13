@@ -99,19 +99,18 @@ const Dendrogram = ({ data }) => {
                 .style("fill", "yellow"); // pass in func as second arg to conditionally render diff color
             // append text to nodes
             node.append("text")
-                .attr("dy", ".31em")
+                .attr("y", -5)
                 .attr("text-anchor", "middle") // centers text in node
                 // .attr("x", d => d.children ? -8 : 8)
                 // .style("text-anchor", d => d.children ? "end" : "start")
                 .text((d) => d.data.file)
                 .style("fill", "blue");
-            // node.append("text")
-            // .attr("dy", ".31em")
-            // .attr("text-anchor", "end") // centers text in node - TODO: update positioning of text 
-            // // .attr("x", d => d.children ? -8 : 8)
-            // // .style("text-anchor", d => d.children ? "end" : "start")
-            // .text((d) => d.data.type) 
-            // .style("fill", "blue");
+            // Append text for component type below file name
+            node.append("text")
+                .attr("y", 10) // Adjust vertical position to be below the file name
+                .attr("text-anchor", "middle")
+                .text((d) => `${d.data.type}`)
+                .style("fill", "green");
             // Update function to handle re-rendering of the tree (for collapsibility)
             function update(root) {
                 tree(root); // Update tree layout
