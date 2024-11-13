@@ -115,7 +115,14 @@ const Dendrogram = ({ data }) => {
         // Enter new nodes
         const nodeEnter = nodes.enter().append("g").attr("class", "node").attr("transform", (d) => `translate(${d.x},${d.y})`);
 
-        nodeEnter.append("circle").attr("r", 40).style("fill", "yellow");
+        nodeEnter.append("rect")
+          .attr("x", -40)
+          .attr("y", -20)
+          .attr("width", 80)
+          .attr("height", 55)
+          .attr("rx", 10)
+          .attr("ry", 10)
+          .style("fill", "yellow");
 
         nodeEnter
           .append("text")
