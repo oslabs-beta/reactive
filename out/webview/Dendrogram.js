@@ -1,5 +1,4 @@
 "use strict";
-// TODO for Micah to build out
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -24,102 +23,27 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// //console.log("Inside Dendrogram at top")
 const react_1 = __importStar(require("react"));
+const client_1 = require("react-dom/client");
 const d3 = __importStar(require("d3"));
-const dummyData = {
-    "file": "App.jsx",
-    "type": "functional",
-    "state": [],
-    "children": [
-        {
-            "file": "Nav.jsx",
-            "type": "functional",
-            "state": [],
-            "children": []
-        },
-        {
-            "file": "Home.jsx",
-            "type": "functional",
-            "state": [],
-            "children": []
-        },
-        {
-            "file": "Search.jsx",
-            "type": "functional",
-            "state": [],
-            "children": [
-                {
-                    "file": "InputForm.jsx",
-                    "type": "functional",
-                    "state": [],
-                    "children": []
-                },
-                {
-                    "file": "ShowImages.jsx",
-                    "type": "functional",
-                    "state": [],
-                    "children": []
-                }
-            ]
-        },
-        {
-            "file": "Login.jsx",
-            "type": "functional",
-            "state": [],
-            "children": []
-        },
-        {
-            "file": "SignUp.jsx",
-            "type": "functional",
-            "state": [],
-            "children": []
-        },
-        {
-            "file": "About.jsx",
-            "type": "functional",
-            "state": [],
-            "children": []
-        },
-        {
-            "file": "Background.jsx",
-            "type": "functional",
-            "state": [],
-            "children": []
-        },
-        {
-            "file": "SecretCloset.jsx",
-            "type": "functional",
-            "state": [],
-            "children": []
-        },
-        {
-            "file": "Upload.jsx",
-            "type": "functional",
-            "state": [],
-            "children": [
-                {
-                    "file": "ImageForm.jsx",
-                    "type": "functional",
-                    "state": [],
-                    "children": []
-                },
-                {
-                    "file": "ShowImages.jsx",
-                    "type": "functional",
-                    "state": [],
-                    "children": []
-                },
-                {
-                    "file": "KidPix.jsx",
-                    "type": "functional",
-                    "state": [],
-                    "children": []
-                }
-            ]
-        }
-    ]
-};
-const Dendrogram = () => {
+window.addEventListener("message", event => {
+    //console.log("I hear an event!"); // logs
+    //console.log("event.data.type: " + event.data.type);
+    if (event.data.type === "testMessage") {
+        //console.log("Received message:", event.data.payload); // logs
+    }
+    if (event.data.type === "astData") {
+        //console.log("astData: " + event.data.payload); // logs
+        const astData = event.data.payload;
+        // Use createRoot to render the Dendrogram component
+        const container = document.getElementById("root");
+        const root = (0, client_1.createRoot)(container); // Create root once, ideally at the start of the app
+        root.render(react_1.default.createElement(Dendrogram, { data: astData }));
+    }
+});
+const Dendrogram = ({ data }) => {
+    //console.log("inside dendrogram. this is the passed in data: ", data); // logs
     const svgRef = (0, react_1.useRef)();
     (0, react_1.useEffect)(() => {
         if (svgRef.current) {
@@ -225,7 +149,7 @@ const Dendrogram = () => {
                 g.attr("transform", event.transform);
             }
         }
-    }, []);
+    }, [data]);
     return (react_1.default.createElement("svg", { ref: svgRef, width: "1400", height: "700", viewBox: "-70 -50 1400 700" },
         react_1.default.createElement("style", null, `
         .link {

@@ -10,7 +10,7 @@ const App = () => {
     return (react_1.default.createElement("div", null,
         react_1.default.createElement("h1", null, "React Component Tree"),
         react_1.default.createElement("div", null,
-            react_1.default.createElement(Dendrogram_1.default, null))));
+            react_1.default.createElement(Dendrogram, null))));
 };
 const root = (0, client_1.createRoot)(document.getElementById('root'));
 root.render(react_1.default.createElement(App, null));

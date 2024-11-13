@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import Dendrogram from './Dendrogram';
+import loadD3Module from './Dendrogram';
 
 const App = () => {
   return (
@@ -15,4 +15,3 @@ const App = () => {
 
 const root = createRoot(document.getElementById('root'));
 root.render(<App />);
-
