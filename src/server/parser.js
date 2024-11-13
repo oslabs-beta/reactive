@@ -41,14 +41,14 @@ function findComponentTypeAndState(ast) {
     ClassDeclaration(path) {
       const componentName = getComponentName(path.node);
       if (componentName) {
-        type = 'class';  // Mark it as a class component
+        type = 'Class';  // Mark it as a class component
       }
     },
     // Check for functional component
     FunctionDeclaration(path) {
       const componentName = getComponentName(path.node);
       if (componentName) {
-        type = 'functional';  // Mark it as a functional component
+        type = 'Functional';  // Mark it as a functional component
       }
     },
     // Check for arrow functional component
@@ -57,7 +57,7 @@ function findComponentTypeAndState(ast) {
       if (declaration && declaration.init && declaration.init.type === 'ArrowFunctionExpression') {
         const componentName = declaration.id.name;
         if (componentName) {
-          type = 'functional';  // Mark it as a functional component
+          type = 'Functional';  // Mark it as a functional component
         }
       }
     },

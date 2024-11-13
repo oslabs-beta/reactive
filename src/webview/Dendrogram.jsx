@@ -78,7 +78,7 @@ const Dendrogram = ({ data }) => {
           update(root); // Re-render the tree after toggling
         });
         
-      // append circles to nodes
+      // append rectangles to nodes
       node.append("rect")
           .attr("x", -40)
           .attr("y", -20)
@@ -86,7 +86,7 @@ const Dendrogram = ({ data }) => {
           .attr("height", 55)
           .attr("rx", 10)
           .attr("ry", 10)
-          .style("fill", "yellow"); // pass in func as second arg to conditionally render diff color
+          .style("fill", "#f7ed76"); // pass in func as second arg to conditionally render diff color
 
       // append text to nodes
       node.append("text")
@@ -95,14 +95,16 @@ const Dendrogram = ({ data }) => {
         // .attr("x", d => d.children ? -8 : 8)
         // .style("text-anchor", d => d.children ? "end" : "start")
         .text((d) => d.data.file)
-        .style("fill", "blue");
+        .style("fill", "#004c99")
+        .style("font-weight", "bold");
         
         // Append text for component type below file name
       node.append("text")
         .attr("y", 10) // Adjust vertical position to be below the file name
         .attr("text-anchor", "middle")
         .text((d) => `${d.data.type}`)
-        .style("fill", "green");
+        .style("fill", "#03331f")
+        .style("font-weight", "bold");
       
       node.append("text")
         .attr("y", 25)
@@ -110,6 +112,7 @@ const Dendrogram = ({ data }) => {
         .text((d) => `State: ${d.data.state.length} items`)
         .style("fill", "purple")
         .style("cursor", "pointer")
+        .style("font-weight", "bold")
         .on("click", (event, d) => {
           event.stopPropagation(); // Prevent node collapse
 
@@ -131,7 +134,7 @@ const Dendrogram = ({ data }) => {
             .attr("height", d.data.state.length * 20 + 20)
             .attr("rx", 5)
             .attr("ry", 5)
-            .style("fill", "white")
+            .style("fill", "#c6def3")
             .style("stroke", "purple")
             .style("stroke-width", "1px");
 
@@ -174,7 +177,7 @@ const Dendrogram = ({ data }) => {
           .attr("height", 55)
           .attr("rx", 10)
           .attr("ry", 10)
-          .style("fill", "yellow"); // pass in func as second arg to conditionally render diff color
+          .style("fill", "#f7ed76"); // pass in func as second arg to conditionally render diff color
 
         // append text to nodes
         nodeEnter.append("text")
@@ -183,14 +186,16 @@ const Dendrogram = ({ data }) => {
           // .attr("x", d => d.children ? -8 : 8)
           // .style("text-anchor", d => d.children ? "end" : "start")
           .text((d) => d.data.file)
-          .style("fill", "blue");
+          .style("fill", "#004c99")
+          .style("font-weight", "bold");
           
           // Append text for component type below file name
         nodeEnter.append("text")
           .attr("y", 10) // Adjust vertical position to be below the file name
           .attr("text-anchor", "middle")
           .text((d) => `${d.data.type}`)
-          .style("fill", "green");
+          .style("fill", "#03331f")
+          .style("font-weight", "bold");
         
         nodeEnter.append("text")
           .attr("y", 25)
@@ -198,6 +203,7 @@ const Dendrogram = ({ data }) => {
           .text((d) => `State: ${d.data.state.length} items`)
           .style("fill", "purple")
           .style("cursor", "pointer")
+          .style("font-weight", "bold")
           .on("click", (event, d) => {
             event.stopPropagation(); // Prevent node collapse
 
@@ -219,7 +225,7 @@ const Dendrogram = ({ data }) => {
               .attr("height", d.data.state.length * 20 + 20)
               .attr("rx", 5)
               .attr("ry", 5)
-              .style("fill", "white")
+              .style("fill", "#c6def3")
               .style("stroke", "purple")
               .style("stroke-width", "1px");
 
