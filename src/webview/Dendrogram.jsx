@@ -1,9 +1,8 @@
-//console.log("Inside Dendrogram at top")
+// //console.log("Inside Dendrogram at top")
 import React, { useRef, useEffect } from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import * as d3 from "d3";
 
-// Listen for messages and render the Dendrogram when astData is received
 window.addEventListener("message", event => {
   console.log("I hear an event!"); // logs
   console.log("event.data.type: " + event.data.type);
@@ -16,8 +15,10 @@ window.addEventListener("message", event => {
     console.log("astData: " + event.data.payload); // logs
     const astData = event.data.payload;
 
-    // Render the Dendrogram component and pass the astData as a prop
-    ReactDOM.render(<Dendrogram data={astData} />, document.getElementById("root"));
+    // Use createRoot to render the Dendrogram component
+    const container = document.getElementById("root");
+    const root = createRoot(container); // Create root once, ideally at the start of the app
+    root.render(<Dendrogram data={astData} />);
   }
 });
 
@@ -81,7 +82,6 @@ const Dendrogram = ({ data }) => {
         .style("fill", "blue");
 
       function update(root) {
-        // Update nodes
         const node = svg.selectAll(".node")
           .data(root.descendants(), d => d.data.file);
 
@@ -115,7 +115,6 @@ const Dendrogram = ({ data }) => {
 
         node.exit().remove();
 
-        // Update links
         const links = svg.selectAll(".link")
           .data(root.links().filter(link => !link.source._children), d => d.source.data.file + "-" + d.target.data.file);
 

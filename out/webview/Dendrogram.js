@@ -22,15 +22,11 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-//console.log("Inside Dendrogram at top")
+// //console.log("Inside Dendrogram at top")
 const react_1 = __importStar(require("react"));
-const react_dom_1 = __importDefault(require("react-dom"));
+const client_1 = require("react-dom/client");
 const d3 = __importStar(require("d3"));
-// Listen for messages and render the Dendrogram when astData is received
 window.addEventListener("message", event => {
     console.log("I hear an event!"); // logs
     console.log("event.data.type: " + event.data.type);
@@ -40,8 +36,10 @@ window.addEventListener("message", event => {
     if (event.data.type === "astData") {
         console.log("astData: " + event.data.payload); // logs
         const astData = event.data.payload;
-        // Render the Dendrogram component and pass the astData as a prop
-        react_dom_1.default.render(react_1.default.createElement(Dendrogram, { data: astData }), document.getElementById("root"));
+        // Use createRoot to render the Dendrogram component
+        const container = document.getElementById("root");
+        const root = (0, client_1.createRoot)(container); // Create root once, ideally at the start of the app
+        root.render(react_1.default.createElement(Dendrogram, { data: astData }));
     }
 });
 const Dendrogram = ({ data }) => {
@@ -95,7 +93,6 @@ const Dendrogram = ({ data }) => {
                 .text(d => d.data.file)
                 .style("fill", "blue");
             function update(root) {
-                // Update nodes
                 const node = svg.selectAll(".node")
                     .data(root.descendants(), d => d.data.file);
                 const nodeEnter = node.enter().append("g")
@@ -124,7 +121,6 @@ const Dendrogram = ({ data }) => {
                     .duration(750)
                     .attr("transform", d => `translate(${d.x},${d.y})`);
                 node.exit().remove();
-                // Update links
                 const links = svg.selectAll(".link")
                     .data(root.links().filter(link => !link.source._children), d => d.source.data.file + "-" + d.target.data.file);
                 links.enter()
