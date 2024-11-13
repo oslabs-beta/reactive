@@ -47,33 +47,39 @@ const Dendrogram = ({ data }) => {
     const svgRef = (0, react_1.useRef)();
     (0, react_1.useEffect)(() => {
         if (svgRef.current) {
-            const svg = d3.select(svgRef.current);
+            const svg = d3.select(svgRef.current); // create SVG element
             const margin = { top: 50, right: 20, bottom: 20, left: 20 };
             const width = 600 - margin.left - margin.right;
-            const height = 600 - margin.top - margin.bottom;
-            // Create tree and layout
-            const tree = d3.tree().size([height, width - 100]);
-            const root = d3.hierarchy(data); // Use the passed-in data as the root of the hierarchy
-            const links = tree(root).links();
+            const height = 1000 - margin.top - margin.bottom;
+            // create tree
+            const tree = d3.tree().size([height, width - 100]); // define tree dimensions
+            const root = d3.hierarchy(dummyData); // create hierarchy based on passed in data
+            const links = tree(root).links(); // create dendrogram links
             const nodes = root.descendants();
-            // Render links
-            svg.selectAll(".link")
+            const zoom = d3.zoom().scaleExtent([0.5, 3]).on("zoom", redraw);
+            svg.call(zoom);
+            const g = svg.append("g"); // The group that holds everything (nodes + links)
+            g.selectAll(".link")
                 .data(links)
+                .enter()
+                .append("path")
                 .enter()
                 .append("path")
                 .attr("class", "link")
                 .attr("d", d3
                 .linkVertical()
-                .x(d => d.x)
-                .y(d => d.y));
-            // Render nodes
-            const node = svg.selectAll(".node")
+                .x((d) => d.x)
+                .y((d) => d.y));
+            // create dendrogram nodes
+            const node = g
+                .selectAll(".node")
                 .data(nodes)
                 .enter()
                 .append("g")
                 .attr("class", "node")
-                .attr("transform", d => `translate(${d.x},${d.y})`)
+                .attr("transform", (d) => `translate(${d.x},${d.y})`)
                 .on("click", (event, d) => {
+                // Toggle children on click
                 if (d.children) {
                     d._children = d.children;
                     d.children = null;
@@ -82,67 +88,92 @@ const Dendrogram = ({ data }) => {
                     d.children = d._children;
                     d._children = null;
                 }
-                update(root);
+                update(root); // Re-render the tree after toggling
             });
-            node.append("circle")
-                .attr("r", 40)
-                .style("fill", "yellow");
-            node.append("text")
+            // append circles to nodes
+            node
+                .append("circle")
+                .attr("r", 40) // Adjust radius based on text length
+                .style("fill", "yellow"); // pass in func as second arg to conditionally render diff color
+            // append text to nodes
+            node
+                .append("text")
                 .attr("dy", ".31em")
-                .attr("text-anchor", "middle")
-                .text(d => d.data.file)
+                .attr("text-anchor", "middle") // centers text in node
+                .text((d) => d.data.file)
                 .style("fill", "blue");
+            node
+                .append("text")
+                .attr("dy", ".31em")
+                .attr("text-anchor", "start") // centers text in node - TODO: update positioning of text
+                .text((d) => d.data.type)
+                .style("fill", "blue");
+            // Update function to handle re-rendering of the tree (for collapsibility)
             function update(root) {
-                const node = svg.selectAll(".node")
-                    .data(root.descendants(), d => d.data.file);
-                const nodeEnter = node.enter().append("g")
+                tree(root); // Update tree layout
+                const nodes = g
+                    .selectAll(".node")
+                    .data(root.descendants(), (d) => d.data.file);
+                // Enter new nodes
+                const nodeEnter = nodes
+                    .enter()
+                    .append("g")
                     .attr("class", "node")
-                    .attr("transform", d => `translate(${d.x},${d.y})`)
-                    .on("click", (event, d) => {
-                    if (d.children) {
-                        d._children = d.children;
-                        d.children = null;
-                    }
-                    else {
-                        d.children = d._children;
-                        d._children = null;
-                    }
-                    update(root);
-                });
-                nodeEnter.append("circle")
-                    .attr("r", 40)
-                    .style("fill", "yellow");
-                nodeEnter.append("text")
+                    .attr("transform", (d) => `translate(${d.x},${d.y})`);
+                nodeEnter.append("circle").attr("r", 40).style("fill", "yellow");
+                nodeEnter
+                    .append("text")
                     .attr("dy", ".31em")
                     .attr("text-anchor", "middle")
-                    .text(d => d.data.file)
+                    .text((d) => d.data.file)
                     .style("fill", "blue");
-                node.transition()
+                // Transition nodes
+                nodes
+                    .transition()
                     .duration(750)
-                    .attr("transform", d => `translate(${d.x},${d.y})`);
-                node.exit().remove();
-                const links = svg.selectAll(".link")
-                    .data(root.links().filter(link => !link.source._children), d => d.source.data.file + "-" + d.target.data.file);
-                links.enter()
+                    .attr("transform", (d) => `translate(${d.x},${d.y})`);
+                // Remove exiting nodes
+                nodes.exit().remove();
+                // Update links
+                const link = g
+                    .selectAll(".link")
+                    .data(root.links(), (d) => d.source.data.file + "-" + d.target.data.file);
+                link
+                    .enter()
                     .append("path")
                     .attr("class", "link")
-                    .attr("d", d => {
-                    const o = { x: d.source.x, y: d.source.y };
-                    return vertical({ source: o, target: o });
+                    .attr("d", (d) => {
+                    const o = { x: d.source.x, y: d.source.y }; // Temporary placeholder for links
+                    return d3
+                        .linkVertical()
+                        .x((d) => d.x)
+                        .y((d) => d.y)({ source: o, target: o });
                 })
                     .transition()
                     .duration(750)
-                    .attr("d", d => vertical(d));
-                links.transition()
+                    .attr("d", (d) => d3
+                    .linkVertical()
+                    .x((d) => d.x)
+                    .y((d) => d.y)(d));
+                // Transition links
+                link
+                    .transition()
                     .duration(750)
-                    .attr("d", d => vertical(d));
-                const vertical = d3.linkVertical()
-                    .x(d => d.x)
-                    .y(d => d.y);
+                    .attr("d", (d) => d3
+                    .linkVertical()
+                    .x((d) => d.x)
+                    .y((d) => d.y)(d));
+                // Remove exiting links
+                link.exit().remove();
+            }
+            // Handle zoom behavior
+            function redraw(event) {
+                // Apply the zoom transformation to the entire <g> element that holds the nodes and links
+                g.attr("transform", event.transform);
             }
         }
     }, [data]);
-    return (react_1.default.createElement("svg", { ref: svgRef, width: "600", height: "600", viewBox: "-70 -50 600 600" },
+    return (react_1.default.createElement("svg", { ref: svgRef, width: "1400", height: "700", viewBox: "-70 -50 1400 700" },
         react_1.default.createElement("style", null, `
         .link {
           fill: none;
