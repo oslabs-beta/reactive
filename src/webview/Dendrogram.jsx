@@ -1,32 +1,115 @@
-// TODO SVG is centered but zoomed out too far, see lines around line 236-249 
-// TODO tweak the node size line 123
+/*
+QUICK MODIFICATION GUIDE:
+------------------------
+1. Node Rectangle Size:
+   - Find nodeEnter.append("rect")
+   - Modify these attributes:
+     * width: 140 (increase for wider rectangles)
+     * height: 60 (increase for taller rectangles)
+     * x: -40 (adjust to center the rectangle, usually -width/2)
+     * y: -20 (adjust to center vertically)
 
-// Event listeners for receiving data from VS Code extension
+2. Text Size and Position:
+   - Find .node text in the CSS or style attributes
+   - Modify font-size (default: 12px)
+   - Adjust text y positions:
+     * First text (filename): y: -5
+     * Second text (type): y: 10
+     * Third text (state): y: 25
+
+3. Colors:
+   - Modify the COLORS object to update the color scheme
+   - Ensure sufficient contrast for accessibility
+   - Consider using color-blind friendly palettes
+
+4. Animation Timing:
+   - Initial delay: 1000ms (1 second)
+   - Transition duration: 2000ms (2 seconds)
+   - Node update duration: 750ms
+
+5. Zoom Levels:
+   - Initial zoom: scale(2)
+   - Final zoom: scale(0.2)
+   - Zoom limits: scaleExtent([0.05, 4])
+
+6. Tree Layout:
+   - Node spacing: nodeSize([200, 200])
+   - Sibling separation: separation((a, b) => (a.parent === b.parent ? 1.5 : 2))
+
+PSEUDO CODE OVERVIEW:
+-------------------
+1. Initialize:
+   ```
+   Create SVG container
+   Define margins and dimensions
+   Configure tree layout
+   Setup zoom behavior
+   ```
+
+2. Data Processing:
+   ```
+   Receive hierarchical data
+   Create d3 hierarchy
+   Store children for expand/collapse
+   ```
+
+3. Tree Rendering:
+   ```
+   For each node:
+     Create group element
+     Add rectangle background
+     Add text elements (filename, type, state)
+     Setup click handlers
+   
+   For each link:
+     Create path between nodes
+     Configure path styling
+   ```
+
+4. Animation Sequence:
+   ```
+   Start:
+     Set initial zoom level (2x)
+     Set initial teal color
+   
+   After 1 second:
+     Begin color transition to coral
+     Begin zoom out to 0.2x
+     Duration: 2 seconds
+   ```
+
+5. Interaction Handlers:
+   ```
+   On node click:
+     Toggle children visibility
+     Update tree layout
+   
+   On state click:
+     Show popup with state details
+     Enable popup close button
+   
+   On zoom:
+     Update transform
+     Maintain smooth transitions
+   ```
+*/
+
 import React, { useRef, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import * as d3 from "d3";
 
-/*
-PSEUDOCODE/EXPLANATION OF CHANGES:
-1. State Display Strategy:
-   - Initially only show count of state items in node
-   - Add click handler to state text
-   - When clicked, show popup with full state details
-   - Popup includes close button and all state items
-
-2. Main Changes:
-   - Modified node sizing and separation
-   - Changed from circles to rounded rectangles
-   - Added collapsible state display
-   - Added popup mechanism for state details
-   - Added event propagation control
-   - Improved text positioning and styling
-
-3. Key Components:
-   - Main node: Shows file, type, and state count
-   - State popup: Shows detailed state array
-   - Event handlers: For node collapse and state display
-*/
+// Color scheme configuration
+const COLORS = {
+  initialNode: "#ff69b4",    // Starting pink
+  finalNode: "#ffeb3b",      // Bright yellow
+  fileName: "#000000",       // Black for main filename
+  typeText: "#2e7d32",      // Dark green for type
+  stateText: "#1565c0",     // Dark blue for state
+  link: "#555555",          // Dark grey for connections
+  statePopupBg: "#FFFFFF",  // White background
+  statePopupBorder: "#1565c0", // Blue border
+  statePopupText: "#000000"  // Black text in popup
+};
 
 window.addEventListener("message", (event) => {
   if (event.data.type === "testMessage") {
@@ -45,210 +128,220 @@ const Dendrogram = ({ data }) => {
   const svgRef = useRef();
 
   useEffect(() => {
-    if (svgRef.current) {
-      const svg = d3.select(svgRef.current);
-      const margin = { top: 50, right: 20, bottom: 20, left: 20 };
-      // const width = 600 - margin.left - margin.right;
-      const width = window.innerWidth - margin.left - margin.right;
-      // const height = 1000 - margin.top - margin.bottom;
-      const height = window.innerHeight - margin.top - margin.bottom;
+    if (!svgRef.current) return;
 
-      // Configure tree layout with improved spacing
-      const tree = d3
-        .tree()
-        .size([height, width - 100])
-        .nodeSize([200, 200])
-        .separation((a, b) => (a.parent === b.parent ? 1.5 : 2)); // separation of nodes
+    const svg = d3.select(svgRef.current);
+    const margin = { top: 50, right: 20, bottom: 20, left: 20 };
+    const width = window.innerWidth - margin.left - margin.right;
+    const height = window.innerHeight - margin.top - margin.bottom;
 
-      const root = d3.hierarchy(data);
-      root.descendants().forEach((d) => (d._children = d.children));
-      // controls the min max zoom levels
-      const zoom = d3.zoom().scaleExtent([0.5, 24]).on("zoom", redraw);
-      svg.call(zoom);
+    // Configure tree layout with improved spacing
+    const tree = d3
+      .tree()
+      .size([height, width - 100])
+      .nodeSize([200, 200])
+      .separation((a, b) => (a.parent === b.parent ? 1.5 : 2));
 
-      const g = svg.append("g");
+    const root = d3.hierarchy(data);
+    root.descendants().forEach((d) => (d._children = d.children));
+    
+    // Configure zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.05, 4])
+      .on("zoom", redraw);
+    
+    svg.call(zoom);
 
-      function update(source) {
-        tree(root);
-        const nodes = root.descendants();
-        const links = root.links();
+    const g = svg.append("g");
 
-        // Handle links
-        const link = g
-          .selectAll(".link")
-          .data(links, (d) => d.source.data.file + "-" + d.target.data.file);
+    function redraw(event) {
+      g.attr("transform", event.transform);
+    }
 
-        link
-          .enter()
-          .append("path")
-          .attr("class", "link")
-          .attr(
-            "d",
-            d3
-              .linkVertical()
-              .x((d) => d.x)
-              .y((d) => d.y)
-          )
-          .merge(link)
-          .transition()
-          .duration(750)
-          .attr(
-            "d",
-            d3
-              .linkVertical()
-              .x((d) => d.x)
-              .y((d) => d.y)
-          );
+    function update(source) {
+      tree(root);
+      const nodes = root.descendants();
+      const links = root.links();
 
-        link.exit().remove();
+      // Handle links
+      const link = g
+        .selectAll(".link")
+        .data(links, (d) => d.source.data.file + "-" + d.target.data.file);
 
-        // Handle nodes
-        const node = g.selectAll(".node").data(nodes, (d) => d.data.file);
+      link
+        .enter()
+        .append("path")
+        .attr("class", "link")
+        .attr(
+          "d",
+          d3
+            .linkVertical()
+            .x((d) => d.x)
+            .y((d) => d.y)
+        )
+        .merge(link)
+        .transition()
+        .duration(750)
+        .attr(
+          "d",
+          d3
+            .linkVertical()
+            .x((d) => d.x)
+            .y((d) => d.y)
+        );
 
-        const nodeEnter = node
-          .enter()
-          .append("g")
-          .attr("class", "node")
-          .attr(
-            "transform",
-            (d) => `translate(${source.x0 || d.x},${source.y0 || d.y})`
-          )
-          .on("click", (event, d) => {
-            d.children = d.children ? null : d._children;
-            update(d);
-          });
+      link.exit().remove();
 
-        // Node rectangle
-        nodeEnter
-          .append("rect")
-          .attr("x", -40)
-          .attr("y", -20)
-          .attr("width", 140) // Adjusted width for longer file names
-          .attr("height", 60)
-          .attr("rx", 10)
-          .attr("ry", 10)
-          .style("fill", "yellow");
+      // Handle nodes
+      const node = g.selectAll(".node").data(nodes, (d) => d.data.file);
 
-        // File name text
-        nodeEnter
-          .append("text")
-          .attr("y", -5)
-          .attr("x", 20)
-          .attr("text-anchor", "middle")
-          .text((d) => d.data.file)
-          .style("fill", "blue");
-
-        // Component type text
-        nodeEnter
-          .append("text")
-          .attr("y", 10)
-          .attr("x", 20)
-          .attr("text-anchor", "middle")
-          .text((d) => `${d.data.type}`)
-          .style("fill", "green");
-
-        // State text with popup functionality
-        nodeEnter
-          .append("text")
-          .attr("y", 25)
-          .attr("x", 20)
-          .attr("text-anchor", "middle")
-          .text((d) => `State: ${d.data.state.length} items`)
-          .style("fill", "purple")
-          .style("cursor", "pointer")
-          .on("click", (event, d) => {
-            event.stopPropagation(); // Prevent node collapse
-
-            // Remove any existing state details
-            g.selectAll(".state-details").remove();
-
-            // Create state details popup
-            const stateDetails = g
-              .append("g")
-              .attr("class", "state-details")
-              .attr("transform", `translate(${d.x + 100},${d.y - 30})`);
-
-            // Popup background
-            stateDetails
-              .append("rect")
-              .attr("x", -170)
-              .attr("y", 80)
-              .attr("width", 150)
-              .attr("height", d.data.state.length * 20 + 20)
-              .attr("rx", 5)
-              .attr("ry", 5)
-              .style("fill", "white")
-              .style("stroke", "purple")
-              .style("stroke-width", "1px");
-
-            // Close button
-            stateDetails
-              .append("text")
-              .attr("x", -35)
-              .attr("y", 95)
-              .text("×")
-              .style("fill", "purple")
-              .style("cursor", "pointer")
-              .style("font-size", "16px")
-              .on("click", () => stateDetails.remove());
-
-            // State items list
-            d.data.state.forEach((item, i) => {
-              stateDetails
-                .append("text")
-                .attr("x", -160)
-                .attr("y", i * 20 + 100)
-                .text(item)
-                .style("fill", "purple")
-                .style("font-size", "12px");
-            });
-          });
-
-        // Handle node updates
-        const nodeUpdate = nodeEnter.merge(node);
-
-        nodeUpdate
-          .transition()
-          .duration(750)
-          .attr("transform", (d) => `translate(${d.x},${d.y})`);
-
-        // Store node positions for transitions
-        nodes.forEach((d) => {
-          d.x0 = d.x;
-          d.y0 = d.y;
+      const nodeEnter = node
+        .enter()
+        .append("g")
+        .attr("class", "node")
+        .attr(
+          "transform",
+          (d) => `translate(${source.x0 || d.x},${source.y0 || d.y})`
+        )
+        .on("click", (event, d) => {
+          d.children = d.children ? null : d._children;
+          update(d);
         });
 
-        // Remove exiting nodes
-        node
-          .exit()
-          .transition()
-          .duration(750)
-          .attr("transform", (d) => `translate(${source.x},${source.y})`)
-          .remove();
-      }
+      nodeEnter
+        .append("rect")
+        .attr("x", -40)
+        .attr("y", -20)
+        .attr("width", 140)
+        .attr("height", 60)
+        .attr("rx", 10)
+        .attr("ry", 10)
+        .style("fill", COLORS.initialNode)
+        .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.2))");
 
-      function redraw(event) {
-        g.attr("transform", event.transform);
-      }
+      nodeEnter
+        .append("text")
+        .attr("y", -5)
+        .attr("x", 20)
+        .attr("text-anchor", "middle")
+        .text((d) => d.data.file)
+        .style("fill", COLORS.fileName);
 
-      update(root);
-      // const xExtent = d3.extent(root.descendants(), d => d.x); const yExtent = d3.extent(root.descendants(), d => d.y); svg.attr("viewBox", `${yExtent[0] - 50} ${xExtent[0] - 50} ${yExtent[1] - yExtent[0] + 100} ${xExtent[1] - xExtent[0] + 100}`);
-      const xExtent = d3.extent(root.descendants(), (d) => d.x);
-      const yExtent = d3.extent(root.descendants(), (d) => d.y);
+      nodeEnter
+        .append("text")
+        .attr("y", 10)
+        .attr("x", 20)
+        .attr("text-anchor", "middle")
+        .text((d) => `${d.data.type}`)
+        .style("fill", COLORS.typeText);
 
-      // Calculate the total width and height of the content
-      const treeWidth = yExtent[1] - yExtent[0]; 
-      const treeHeight = xExtent[1] - xExtent[0]; // stuck on this, TODO
+      nodeEnter
+        .append("text")
+        .attr("y", 25)
+        .attr("x", 20)
+        .attr("text-anchor", "middle")
+        .text((d) => `State: ${d.data.state.length} items`)
+        .style("fill", COLORS.stateText)
+        .style("cursor", "pointer")
+        .on("click", (event, d) => {
+          event.stopPropagation();
+          g.selectAll(".state-details").remove();
 
-      // Add some padding to the viewBox to ensure everything is visible
-      const padding = 50; // You can adjust this value to increase the margin around the tree
-      svg.attr(
-        "viewBox",
-        `${yExtent[0] - padding} ${xExtent[0] - padding} ${
-          treeWidth + 2 * padding
-        } ${treeHeight + 2 * padding}`
-      );
+          const stateDetails = g
+            .append("g")
+            .attr("class", "state-details")
+            .attr("transform", `translate(${d.x + 100},${d.y - 30})`);
+
+          stateDetails
+            .append("rect")
+            .attr("x", -170)
+            .attr("y", 80)
+            .attr("width", 150)
+            .attr("height", d.data.state.length * 20 + 20)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .style("fill", COLORS.statePopupBg)
+            .style("stroke", COLORS.statePopupBorder)
+            .style("stroke-width", "1px")
+            .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.1))");
+
+          stateDetails
+            .append("text")
+            .attr("x", -35)
+            .attr("y", 95)
+            .text("×")
+            .style("fill", COLORS.statePopupText)
+            .style("cursor", "pointer")
+            .style("font-size", "16px")
+            .on("click", () => stateDetails.remove());
+
+          d.data.state.forEach((item, i) => {
+            stateDetails
+              .append("text")
+              .attr("x", -160)
+              .attr("y", i * 20 + 100)
+              .text(item)
+              .style("fill", COLORS.statePopupText)
+              .style("font-size", "12px");
+          });
+        });
+
+      const nodeUpdate = nodeEnter.merge(node);
+
+      nodeUpdate
+        .transition()
+        .duration(750)
+        .attr("transform", (d) => `translate(${d.x},${d.y})`);
+
+      nodes.forEach((d) => {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+
+      node
+        .exit()
+        .transition()
+        .duration(750)
+        .attr("transform", (d) => `translate(${source.x},${source.y})`)
+        .remove();
+
+      return nodes;
     }
+
+    // Initial update and get nodes
+    const nodes = update(root);
+
+    // Find the target node (root node)
+    const targetNode = nodes[0];
+    
+    // Initial zoomed in transform
+    const initialTransform = d3.zoomIdentity
+      .translate(width / 2 - targetNode.x, height / 2 - targetNode.y)
+      .scale(2);
+
+    // Apply initial transform
+    svg.call(zoom.transform, initialTransform);
+
+    // After 1 second, zoom out and transition colors
+    setTimeout(() => {
+      // Start color transition
+      g.selectAll("rect")
+        .transition()
+        .duration(2000)
+        .style("fill", COLORS.finalNode);
+
+      // Zoom out
+      svg.transition()
+        .duration(2000)
+        .call(zoom.transform, d3.zoomIdentity
+          .translate(width / 2 - targetNode.x, height / 2 - targetNode.y)
+          .scale(0.2)
+        );
+    }, 1000);
+
+    return () => {
+      svg.selectAll("*").remove();
+    };
   }, [data]);
 
   return (
@@ -256,22 +349,20 @@ const Dendrogram = ({ data }) => {
       <style>{`
         .link {
           fill: none;
-          stroke: #555;
-          stroke-opacity: 0.4;
+          stroke: ${COLORS.link};
+          stroke-opacity: 0.6;
           stroke-width: 1.5px;
-        }
-        .node rect {
-          fill: yellow;
         }
         .node text {
           font-size: 12px;
-          fill: blue;
+          font-weight: 500;
         }
         .state-details {
           pointer-events: all;
         }
         .state-details text {
           user-select: none;
+          fill: ${COLORS.statePopupText};
         }
       `}</style>
     </svg>
