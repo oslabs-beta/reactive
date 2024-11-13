@@ -61,22 +61,12 @@ function findComponentTypeAndState(ast) {
         }
       }
     },
-    // Parse for state data
-    // CallExpression(path) {
-    //    if (path.node.callee.name === 'useState') {
-    //     const [stateVar, setter] = path.node.arguments;
-    //     if (stateVar && stateVar.type === 'ArrayPattern') {
-    //        stateVar.elements.forEach(element => {
-    //         if (element.type === 'Identifier') {
-    //            // Ignore setter functions, include only state variables
-    //            /*if (!element.name.startsWith('set')) {*/
-    //             stateVariables.push(element.name);
-    //            //}
-    //         }
-    //        });
-    //     }  
-    //    }
-    // }
+    VariableDeclarator(path) {
+      //const result = {};
+        if (path.node && path.node.init && path.node.init.callee && path.node.init.callee.name === 'useState'){
+          stateVariables.push(path.node.id.elements[0].name)
+      };
+    }
   });
 
   return {type, stateVariables };
