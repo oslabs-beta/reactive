@@ -1,3 +1,6 @@
+// TODO SVG is centered but zoomed out too far, see lines around line 236-249 
+// TODO tweak the node size line 123
+
 // Event listeners for receiving data from VS Code extension
 import React, { useRef, useEffect } from "react";
 import { createRoot } from "react-dom/client";
@@ -235,7 +238,7 @@ const Dendrogram = ({ data }) => {
 
       // Calculate the total width and height of the content
       const treeWidth = yExtent[1] - yExtent[0]; 
-      const treeHeight = xExtent[1] - xExtent[0]; 
+      const treeHeight = xExtent[1] - xExtent[0]; // stuck on this, TODO
 
       // Add some padding to the viewBox to ensure everything is visible
       const padding = 50; // You can adjust this value to increase the margin around the tree
