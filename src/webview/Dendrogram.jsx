@@ -148,17 +148,20 @@ const Dendrogram = () => {
           update(root); // Re-render the tree after toggling
         });
         
-      // append circles to nodes
-      node.append("circle")
-        .attr("r", 40)
-        .style("fill", "yellow"); // pass in func as second arg to conditionally render diff color
+      // append rectangles to nodes
+      node.append("rect")
+        .attr("x", -40) // Center the rectangle horizontally
+        .attr("y", -20) // Center the rectangle vertically
+        .attr("width", 80) // Set width
+        .attr("height", 40) // Set height
+        .attr("rx", 10) // Rounded corner x-radius
+        .attr("ry", 10) // Rounded corner y-radius
+        .style("fill", "yellow"); // Background color for the rectangle
 
-      // append text to nodes
+      // Append text to nodes
       node.append("text")
         .attr("dy", ".31em")
-        .attr("text-anchor", "middle") // centers text in node
-        // .attr("x", d => d.children ? -8 : 8)
-        // .style("text-anchor", d => d.children ? "end" : "start")
+        .attr("text-anchor", "middle")
         .text((d) => d.data.file)
         .style("fill", "blue");
 
