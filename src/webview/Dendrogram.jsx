@@ -12,6 +12,11 @@ const COLORS = {
       tertiary: "#1565c0",
     },
     depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
+    popup: {
+      background: "#ffffff",
+      border: "#1565c0",
+      text: "#1a237e",
+    }
   },
   dark: {
     background: "#212121",
@@ -22,6 +27,11 @@ const COLORS = {
       tertiary: "#90caf9",
     },
     depths: ["#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#181616", "#000000"],
+    popup: {
+      background: "#424242",
+      border: "#90caf9",
+      text: "#bbdefb",
+    }
   },
 };
 
@@ -64,7 +74,7 @@ const Dendrogram = ({ data }) => {
     const zoom = d3
       .zoom()
       .scaleExtent([0.1, 2])
-      .on("zoom", (event) => g.attr("transform", event.transform));
+      .on("zoom", (event) => g.attr("transform", event.transform)); 
 
     svg.call(zoom);
 
@@ -78,6 +88,11 @@ const Dendrogram = ({ data }) => {
       // Optionally, collapse nodes here if you want
       // d.children = null;
     });
+
+    // Helper function to remove state popup
+    function removeStatePopup() {
+      g.selectAll(".state-details").remove();
+    }
 
     // Function to update the tree
     function update(source) {
@@ -166,7 +181,64 @@ const Dendrogram = ({ data }) => {
         .attr("dy", "1.9em")
         .attr("text-anchor", "middle")
         .style("fill", colorScheme.text.tertiary)
-        .text((d) => `State: ${d.data.state ? d.data.state.length : 0}`);
+        .text((d) => `State: ${d.data.state ? d.data.state.length : 0}`)
+        .on("click", (event, d) => {
+          event.stopPropagation();
+          removeStatePopup();
+
+          if (!d.data.state || d.data.state.length === 0) return;
+
+          const stateDetails = g
+            .append("g")
+            .attr("class", "state-details")
+            .attr("transform", `translate(${d.x + 100},${d.y - 30})`);
+
+          const padding = 10;
+          const itemHeight = 20;
+          const width = 200;
+          const height = Math.min(d.data.state.length * itemHeight + padding * 2, 300);
+
+          // Popup background
+          stateDetails
+            .append("rect")
+            .attr("x", -padding)
+            .attr("y", -padding)
+            .attr("width", width)
+            .attr("height", height)
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .style("fill", colorScheme.popup.background)
+            .style("stroke", colorScheme.popup.border)
+            .style("stroke-width", "1px");
+
+          // Close button
+          stateDetails
+            .append("text")
+            .attr("x", width - 25)
+            .attr("y", 5)
+            .text("×")
+            .style("fill", colorScheme.popup.text)
+            .style("cursor", "pointer")
+            .style("font-size", "16px")
+            .on("click", removeStatePopup);
+
+          // Create scrollable container for state items
+          const stateContainer = stateDetails
+            .append("g")
+            .attr("class", "state-container")
+            .attr("clip-path", "url(#state-clip)");
+
+          // Add state items
+          d.data.state.forEach((item, i) => {
+            stateContainer
+              .append("text")
+              .attr("x", 5)
+              .attr("y", i * itemHeight + 15)
+              .text(item)
+              .style("fill", colorScheme.popup.text)
+              .style("font-size", "12px");
+          });
+        });
 
       // UPDATE
       const nodeUpdate = nodeEnter.merge(node);
@@ -292,6 +364,12 @@ const Dendrogram = ({ data }) => {
           .link {
             fill: none;
             stroke-width: 1.5px;
+          }
+            .state-details {
+            pointer-events: all;
+          }
+          .state-details text {
+            user-select: none;
           }
         `}</style>
       </svg>
