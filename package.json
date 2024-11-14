@@ -42,7 +42,9 @@
     ]
   },
 "scripts": {
-    "build": "npm run compile && npm run webpack",     
+"scripts": {
+    "build": "npm run compile && webpack --config webpack.dev.js",
+    "build:prod": "npm run compile && webpack --config webpack.prod.js",
     "compile": "tsc -p ./tsconfig.json",                
     "webpack": "webpack",                               
     "frontend:watch": "webpack --watch",               
