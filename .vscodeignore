@@ -4,17 +4,15 @@
 
 # IGNORED FILES/DIRECTORIES
 # ------------------------
-# Source files - ignored because we use compiled output
+# Source and Build Files
 src/**                  # All TypeScript/JavaScript source files
-                      # We use the compiled versions in 'out' directory
-
-# Build and development files
 dist/**                 # Development build output from webpack
 node_modules/**         # NPM dependencies (will be installed by user)
 .vscode/**             # VS Code editor settings
 .vscode-test/**        # VS Code test environment files
+.vscode-test.mjs       # VS Code test configuration
 
-# Config files - not needed in production
+# Config and Build Files
 .gitignore             # Git ignore file
 .yarnrc               # Yarn config
 vsc-extension-quickstart.md  # VS Code extension guide
@@ -23,15 +21,18 @@ webpack.config.js      # Development webpack config
 webpack.prod.js        # Production webpack config
 tsconfig.json          # TypeScript configuration
 **/tsconfig.json       # Any other TypeScript configs
-**/*.map              # Source maps for debugging
 
-# Test files - not needed in production
+# Debug and Source Map Files
+**/*.map              # Source maps for debugging
+**/*.ts               # TypeScript source files
+**/*.test.js          # JavaScript test files
+**/*.test.ts          # TypeScript test files
+
+# Test Files
 test/**               # Test directory
 **/test/**           # Any test directories
-**/*.test.js         # JavaScript test files
-**/*.test.ts         # TypeScript test files
 
-# System files
+# System Files
 **/.DS_Store         # Mac OS system files
 **/Thumbs.db         # Windows system files
 
@@ -52,14 +53,5 @@ test/**               # Test directory
 !CHANGELOG.md       # KEEP: Version history
                     # Important for users to track changes
 
-# Optional pattern for React components if sourcemaps needed
-!src/webview/**/*.jsx  # KEEP: React components for sourcemap support
-                     # Comment out if sourcemaps aren't needed
-
-# ==================================
-# How this works:
-# 1. VS Code first ignores everything that matches ignore patterns
-# 2. Then it un-ignores everything that matches patterns with !
-# 3. Files must be explicitly un-ignored to be included
-# 4. More specific patterns take precedence over less specific ones
-# ==================================
+# Note: Removed the React components sourcemap support
+# as it's not needed in production and reduces package size
