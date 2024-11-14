@@ -1,10 +1,10 @@
-"{
+{
   "name": "reactive",
   "displayName": "Reactive",
   "publisher": "oslabs-reactive",
   "icon": "images/reactive.png",
-  "description": "",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "description": "A VS Code extension that visualizes React component hierarchies, helping developers understand and navigate complex React applications. Features component tree visualization, state inspection, and component type differentiation.",
   "repository": {
     "type": "git",
     "url": "https://github.com/oslabs-beta/reactive"
@@ -101,4 +101,3 @@
     "package.json"
   ]
 }
-"
