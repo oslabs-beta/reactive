@@ -117,7 +117,7 @@ window.addEventListener("message", (event) => {
     // Extract and validate data
     const astData = event.data.payload.treeData || {};
     const filePath = event.data.payload.filePath || "Unknown Component Path";
-    const appName = event.data.appName || "React App";
+    const appName = event.data.appName || ""; // TODO: try to capture React target app name 
 
     // Calculate component statistics
     const stats = calculateComponentStats(astData);
