@@ -21,7 +21,7 @@ const COLORS = {
       secondary: "#c8e6c9",
       tertiary: "#90caf9",
     },
-    depths: ["#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#212121", "#000000"],
+    depths: ["#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#181616", "#000000"],
   },
 };
 
@@ -35,7 +35,7 @@ const NODE_CONFIG = {
 
 const Dendrogram = ({ data }) => {
   const svgRef = useRef();
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
   let i = 0; // Initialize node ID counter
 
   useEffect(() => {
@@ -126,7 +126,7 @@ const Dendrogram = ({ data }) => {
         .attr("height", NODE_CONFIG.baseHeight)
         .attr("rx", NODE_CONFIG.cornerRadius)
         .style("fill", (d) => {
-          const depth = Math.min(d.depth, colorScheme.depths.length - 1);
+          const depth = (d.depth % (colorScheme.depths.length));
           return colorScheme.depths[depth];
         });
 
@@ -155,7 +155,7 @@ const Dendrogram = ({ data }) => {
       // Component type
       textGroup
         .append("text")
-        .attr("dy", "0em")
+        .attr("dy", "0.7em")
         .attr("text-anchor", "middle")
         .style("fill", colorScheme.text.secondary)
         .text((d) => d.data.type || "Unknown");
@@ -163,7 +163,7 @@ const Dendrogram = ({ data }) => {
       // State count
       textGroup
         .append("text")
-        .attr("dy", "1.2em")
+        .attr("dy", "1.9em")
         .attr("text-anchor", "middle")
         .style("fill", colorScheme.text.tertiary)
         .text((d) => `State: ${d.data.state ? d.data.state.length : 0}`);
