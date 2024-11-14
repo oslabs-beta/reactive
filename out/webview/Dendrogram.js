@@ -111,6 +111,7 @@ const Dendrogram = ({ data }) => {
                 .attr("transform", (d) => `translate(${source.x0},${source.y0})`)
                 .on("click", (event, d) => {
                 // Toggle children on click
+                // Toggle children on click
                 if (d.children) {
                     d._children = d.children;
                     d.children = null;
