@@ -1,36 +1,52 @@
 const path = require('path');
-const HtmlWebPackPlugin = require('html-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
 
-module.exports = {
-  mode: 'development',
-  entry: './extension.js',
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
-  },
-  module: {
-    rules: [
-      {
-        test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
-        use: ['babel-loader'],
-        options: {
-            presets: ['@babel/env', '@babel/react'],
-          },
-      },
-    ],
+module.exports = [
+  {
+    name: 'extension',
+    mode: 'development',
+    target: 'node',
+    entry: './out/server/extension.js',
+    output: {
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'extension.js',
+      libraryTarget: 'commonjs2',
+      clean: true
+    },
+    externals: {
+      vscode: 'commonjs vscode',
+    },
     resolve: {
-        extensions: ['.js', '.jsx'],
-      },
+      extensions: ['.js', '.ts'],
+    },
   },
-//   plugins: [
-//     new HtmlWebPackPlugin({
-//       template: './src/index.html',
-//       filename: './index.html',
-//     }),
-    // new CopyPlugin({
-    //   patterns: [{ from: './src/style.css' }],
-    // }),
-//   ]
-};
+  {
+    name: 'webview',
+    mode: 'development',
+    target: 'web',
+    entry: './src/webview/index.js',
+    output: {
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'webview.js',
+      clean: false
+    },
+    resolve: {
+      extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.(js|jsx)$/,
+          exclude: /node_modules/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env', '@babel/preset-react'],
+            },
+          },
+        },
+      ],
+    },
+  },
+];
+
+
