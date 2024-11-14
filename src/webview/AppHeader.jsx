@@ -126,10 +126,10 @@ const AppHeader = ({ stats, appName, filePath }) => {
             {/* Statistics pills */}
             <div className="text-sm mt-2 space-x-6">
               <span className="px-3 py-1 bg-blue-500 rounded-full">
-                Functional: {functionalPercent}%
+                Functional: {functionalPercent}% |&nbsp;
               </span>
               <span className="px-3 py-1 bg-green-500 rounded-full">
-                Class: {classPercent}%
+                Class: {classPercent}% |&nbsp;
               </span>
               <span className="px-3 py-1 bg-yellow-500 rounded-full">
                 Other: {nullPercent}%
