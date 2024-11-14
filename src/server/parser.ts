@@ -1,3 +1,5 @@
+// TODO: Complete TS migration for parser.js file (starting point below)
+
 // const fs = require('fs');
 // const path = require('path');
 // const parser = require('@babel/parser');

@@ -1,3 +1,5 @@
+// Test function syntax (function should create error)
+
 function unusedFunction(unusedParam: any) {
     var unusedVariable = 5;
     return 10;
