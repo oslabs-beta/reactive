@@ -1,14 +1,36 @@
 {
   "name": "reactive",
   "displayName": "Reactive",
+  "publisher": "oslabs-reactive",
+  "icon": "images/reactive.png",
   "description": "",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oslabs-beta/reactive"
+  },
   "engines": {
     "vscode": "^1.93.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Visualization"
   ],
+  "keywords": [
+		"react",
+		"component hierarchy",
+		"devtools",
+    "hierarchy tree",
+    "hierarchy",
+    "parent-child",
+    "visualizer",
+    "visualization",
+    "react components",
+    "components",
+    "component tree",
+    "client component",
+    "rsc"
+	],
   "activationEvents": [],
   "main": "./src/server/extension.js",
   "contributes": {
