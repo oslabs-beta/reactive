@@ -1,192 +1,298 @@
 import React, { useRef, useEffect, useState } from "react";
 import * as d3 from "d3";
 
+// Visual styling constants
 const COLORS = {
-  initial: "#ff69b4",
-  depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
-  text: {
-    primary: "#1a237e",
-    secondary: "#2e7d32",
-    tertiary: "#1565c0"
+  light: {
+    background: "#ffffff",
+    link: "rgba(85, 85, 85, 0.4)",
+    text: {
+      primary: "#1a237e",
+      secondary: "#2e7d32",
+      tertiary: "#1565c0",
+    },
+    depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
   },
-  link: "rgba(85, 85, 85, 0.4)",
-  truncation: "#e91e63"
+  dark: {
+    background: "#212121",
+    link: "rgba(255, 255, 255, 0.4)",
+    text: {
+      primary: "#bbdefb",
+      secondary: "#c8e6c9",
+      tertiary: "#90caf9",
+    },
+    depths: ["#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#212121", "#000000"],
+  },
 };
 
+// Node layout configuration
 const NODE_CONFIG = {
   baseWidth: 130,
   baseHeight: 70,
-  depthScale: 0.9,
-  minScale: 0.6,
   cornerRadius: 10,
   textTruncateLength: 15,
-  verticalSpacing: 120,
-  horizontalSpacing: 40
 };
 
-const Dendrogram = ({ data, appName }) => {
+const Dendrogram = ({ data }) => {
   const svgRef = useRef();
-  const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
+  const [darkMode, setDarkMode] = useState(false);
+  let i = 0; // Initialize node ID counter
 
   useEffect(() => {
     if (!svgRef.current) return;
+
+    // Clear previous SVG content
+    d3.select(svgRef.current).selectAll("*").remove();
 
     const svg = d3.select(svgRef.current);
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    const tree = d3.tree()
-      .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
-      .separation((a, b) => (a.parent === b.parent ? 1.2 : 2.4));
+    // Set background color based on theme
+    svg.style("background", darkMode ? COLORS.dark.background : COLORS.light.background);
 
-    const root = d3.hierarchy(data);
-    const g = svg.append("g"); // Group element to allow for zooming
+    const colorScheme = darkMode ? COLORS.dark : COLORS.light;
 
-    const zoom = d3.zoom()
+    const g = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
+
+    const tree = d3
+      .tree()
+      // Adjust nodeSize to increase vertical spacing
+      .nodeSize([NODE_CONFIG.baseWidth * 1.5, NODE_CONFIG.baseHeight * 4]) // Increase vertical spacing
+      .separation((a, b) => (a.parent === b.parent ? 1 : 1.5)); // Adjust separation
+
+    const zoom = d3
+      .zoom()
       .scaleExtent([0.1, 2])
       .on("zoom", (event) => g.attr("transform", event.transform));
+
     svg.call(zoom);
 
+    // Create hierarchy and store initial children state
+    const root = d3.hierarchy(data);
+    root.x0 = 0;
+    root.y0 = 0;
+
+    root.descendants().forEach((d) => {
+      d._children = d.children;
+      // Optionally, collapse nodes here if you want
+      // d.children = null;
+    });
+
+    // Function to update the tree
     function update(source) {
-      tree(root);
-      const nodes = root.descendants();
-      const links = root.links();
+      const duration = 750;
 
-      const link = g.selectAll(".link")
-        .data(links, d => d.target.data.file);
+      // Assigns the x and y position for the nodes
+      const treeData = tree(root);
 
-      link.enter()
-        .append("path")
-        .attr("class", "link")
-        .attr("d", d3.linkVertical()
-          .x(d => d.x)
-          .y(d => d.y)
-        )
-        .style("stroke", COLORS.link)
-        .style("fill", "none")
-        .style("stroke-width", 1.5);
+      // Compute the new tree layout
+      const nodes = treeData.descendants();
+      const links = treeData.links();
 
-      link.exit().remove();
+      // Normalize for fixed-depth (adjusted depth factor)
+      nodes.forEach((d) => (d.y = d.depth * 200)); // Increase depth spacing
 
-      const node = g.selectAll(".node")
-        .data(nodes, d => d.data.file);
+      /** Nodes Section **/
 
-      const nodeEnter = node.enter()
+      // Update the nodes...
+      const node = g.selectAll("g.node").data(nodes, (d) => d.id || (d.id = ++i));
+
+      // Enter any new nodes at the parent's previous position.
+      const nodeEnter = node
+        .enter()
         .append("g")
         .attr("class", "node")
-        .attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
+        .attr("transform", (d) => `translate(${source.x0},${source.y0})`)
         .on("click", (event, d) => {
-          d.children = d.children ? null : d._children;
+          // Toggle children on click
+          if (d.children) {
+            d._children = d.children;
+            d.children = null;
+          } else {
+            d.children = d._children;
+            d._children = null;
+          }
           update(d);
         });
 
-      nodeEnter.each(function(d) {
-        const depth = Math.min(d.depth, COLORS.depths.length - 1);
-        d3.select(this).append("rect")
-          .attr("x", -NODE_CONFIG.baseWidth / 2)
-          .attr("y", -NODE_CONFIG.baseHeight / 2)
-          .attr("width", NODE_CONFIG.baseWidth)
-          .attr("height", NODE_CONFIG.baseHeight)
-          .attr("rx", NODE_CONFIG.cornerRadius)
-          .style("fill", COLORS.depths[depth]);
+      // Add rectangles for the nodes
+      nodeEnter
+        .append("rect")
+        .attr("class", "node")
+        .attr("x", -NODE_CONFIG.baseWidth / 2)
+        .attr("y", -NODE_CONFIG.baseHeight / 2)
+        .attr("width", NODE_CONFIG.baseWidth)
+        .attr("height", NODE_CONFIG.baseHeight)
+        .attr("rx", NODE_CONFIG.cornerRadius)
+        .style("fill", (d) => {
+          const depth = Math.min(d.depth, colorScheme.depths.length - 1);
+          return colorScheme.depths[depth];
+        });
 
-        const textGroup = d3.select(this).append("g").attr("class", "text-group");
-        const fileName = d.data.file || "Unnamed";
-        const truncatedName = fileName.length > NODE_CONFIG.textTruncateLength
-          ? `${fileName.slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
-          : fileName;
+      // Add text to the nodes
+      const textGroup = nodeEnter.append("g").attr("class", "text-group");
 
-        textGroup.append("text")
-          .attr("y", -NODE_CONFIG.baseHeight / 4)
-          .attr("text-anchor", "middle")
-          .style("fill", COLORS.text.primary)
-          .text(truncatedName);
+      // Component name
+      const fileName = (d) => d.data.file || "Unnamed";
+      const truncatedName = (d) =>
+        fileName(d).length > NODE_CONFIG.textTruncateLength
+          ? `${fileName(d).slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
+          : fileName(d);
 
-        if (truncatedName !== fileName) {
-          textGroup.append("title").text(fileName);
-        }
+      textGroup
+        .append("text")
+        .attr("dy", "-0.6em")
+        .attr("text-anchor", "middle")
+        .style("fill", colorScheme.text.primary)
+        .text((d) => truncatedName(d));
 
-        textGroup.append("text")
-          .attr("y", 0)
-          .attr("text-anchor", "middle")
-          .style("fill", COLORS.text.secondary)
-          .text(d.data.type || "Unknown");
+      // Add tooltip for truncated names
+      textGroup
+        .append("title")
+        .text((d) => (truncatedName(d) !== fileName(d) ? fileName(d) : ""));
 
-        textGroup.append("text")
-          .attr("y", NODE_CONFIG.baseHeight / 4)
-          .attr("text-anchor", "middle")
-          .style("fill", COLORS.text.tertiary)
-          .text(`State: ${d.data.state ? d.data.state.length : 0}`);
-      });
+      // Component type
+      textGroup
+        .append("text")
+        .attr("dy", "0em")
+        .attr("text-anchor", "middle")
+        .style("fill", colorScheme.text.secondary)
+        .text((d) => d.data.type || "Unknown");
 
+      // State count
+      textGroup
+        .append("text")
+        .attr("dy", "1.2em")
+        .attr("text-anchor", "middle")
+        .style("fill", colorScheme.text.tertiary)
+        .text((d) => `State: ${d.data.state ? d.data.state.length : 0}`);
+
+      // UPDATE
       const nodeUpdate = nodeEnter.merge(node);
-      nodeUpdate.transition().duration(750).attr("transform", d => `translate(${d.x},${d.y})`);
-      nodes.forEach(d => {
+
+      // Transition to the proper position for the nodes
+      nodeUpdate
+        .transition()
+        .duration(duration)
+        .attr("transform", (d) => `translate(${d.x},${d.y})`);
+
+      // Remove any exiting nodes
+      const nodeExit = node
+        .exit()
+        .transition()
+        .duration(duration)
+        .attr("transform", (d) => `translate(${source.x},${source.y})`)
+        .remove();
+
+      // On exit reduce the node rectangles size to 0
+      nodeExit.select("rect").attr("width", 0).attr("height", 0);
+
+      /** Links Section **/
+
+      // Update the links...
+      const link = g.selectAll("path.link").data(links, (d) => d.target.id);
+
+      // Enter any new links at the parent's previous position.
+      const linkEnter = link
+        .enter()
+        .insert("path", "g")
+        .attr("class", "link")
+        .attr("d", () => {
+          const o = { x: source.x0, y: source.y0 };
+          return diagonal(o, o);
+        })
+        .style("fill", "none")
+        .style("stroke", colorScheme.link)
+        .style("stroke-width", "1.5px");
+
+      // UPDATE
+      const linkUpdate = linkEnter.merge(link);
+
+      // Transition back to the parent element position
+      linkUpdate
+        .transition()
+        .duration(duration)
+        .attr("d", (d) => diagonal(d.source, d.target));
+
+      // Remove any exiting links
+      link
+        .exit()
+        .transition()
+        .duration(duration)
+        .attr("d", () => {
+          const o = { x: source.x, y: source.y };
+          return diagonal(o, o);
+        })
+        .remove();
+
+      // Store the old positions for transition.
+      nodes.forEach((d) => {
         d.x0 = d.x;
         d.y0 = d.y;
       });
-      node.exit().remove();
     }
 
+    // Creates a curved (diagonal) path from parent to the child nodes
+    function diagonal(s, d) {
+      return `M ${s.x},${s.y}
+              C ${(s.x + d.x) / 2},${s.y}
+                ${(s.x + d.x) / 2},${d.y}
+                ${d.x},${d.y}`;
+    }
+
+    // Start the visualization with a zoom-in effect
+    svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(2));
+
+    // Initial update to render the tree
     update(root);
 
-    const initialTransform = d3.zoomIdentity.translate(width / 2, height / 4).scale(0.8);
-    svg.call(zoom.transform, initialTransform);
+    // Animate zoom-out to fit the tree
+    svg
+      .transition()
+      .duration(2000)
+      .call(
+        zoom.transform,
+        d3.zoomIdentity.translate(width / 2, 50).scale(0.8),
+        d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+      );
 
-    setTimeout(() => {
-      svg.transition()
-        .duration(2000)
-        .call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 6).scale(0.4));
-    }, 1000);
-
-    return () => svg.selectAll("*").remove();
-  }, [data]);
-
-  // **DARK MODE STYLES**
-  const backgroundColor = isDarkMode ? "#1a1a1a" : "#ffffff";
-  const textColor = isDarkMode ? "#ffffff" : "#333333";
+    // Cleanup function
+    return () => {
+      svg.selectAll("*").remove();
+    };
+  }, [data, darkMode]);
 
   return (
-    <div style={{ position: "relative" }}>
+    <div>
+      {/* Dark Mode Toggle */}
       <button
-        onClick={() => setIsDarkMode(prev => !prev)}
+        onClick={() => setDarkMode((prev) => !prev)}
         style={{
           position: "absolute",
-          top: 20,
-          right: 20,
+          top: 10,
+          right: 10,
+          zIndex: 1,
           padding: "10px 20px",
-          backgroundColor: isDarkMode ? "#333" : "#ddd",
-          color: isDarkMode ? "#eee" : "#111",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer"
+          cursor: "pointer",
         }}
       >
-        Toggle Dark Mode
+        {darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
       </button>
-
-      <h1
-        style={{
-          position: "absolute",
-          top: 20,
-          left: 20,
-          color: textColor,
-          fontSize: "24px",
-          fontFamily: "Arial, sans-serif"
-        }}
-      >
-        {appName || "React Component Tree"}
-      </h1>
-
-      <svg 
-        ref={svgRef} 
-        width="100vw" 
-        height="100vh"
-        style={{ backgroundColor }}
-      >
+      <svg ref={svgRef} width="100vw" height="100vh">
         <style>{`
-          .link { stroke: ${COLORS.link}; stroke-width: 1.5px; }
-          .node text { font-size: 12px; font-weight: 500; fill: ${textColor}; }
+          .node rect {
+            cursor: pointer;
+            stroke-width: 1.5px;
+          }
+          .node text {
+            font-size: 12px;
+            font-family: sans-serif;
+          }
+          .link {
+            fill: none;
+            stroke-width: 1.5px;
+          }
         `}</style>
       </svg>
     </div>
@@ -196,438 +302,630 @@ const Dendrogram = ({ data, appName }) => {
 export default Dendrogram;
 
 
-// // /*
-// // VISUALIZATION CONFIGURATION:
-// // --------------------------
-// // 1. Node Display:
-// //    - Rounded rectangles with dynamic sizing based on depth
-// //    - Smart text truncation for names > 15 characters
-// //    - Hover tooltips for full names
-// //    - Visual indicators for truncated names
-// //    - Depth-based colors for distinguishing levels
-
-// // 2. Layout:
-// //    - Designed for trees up to 5+ levels deep
-// //    - Handles 2-10 siblings per level smoothly
-// //    - Dynamic spacing for visually clear separation
-
-// // 3. Color Scheme:
-// //    - Transition from pink to orange with increasing depth
-// //    - High contrast text
-// //    - Light shadows to enhance depth perception
-// // */
-
-// import React, { useRef, useEffect } from "react";
+// import React, { useRef, useEffect, useState } from "react";
 // import * as d3 from "d3";
 
-// // **STYLE CONFIGURATION:** Set color and sizing for node and link visuals
+// // Visual styling constants
 // const COLORS = {
-//   initial: "#ff69b4", // Start with pink, transitioning to orange for deeper nodes
-//   depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
-//   text: {
-//     primary: "#1a237e", // Filename color
-//     secondary: "#2e7d32", // Component type color
-//     tertiary: "#1565c0", // State info color
+//   light: {
+//     background: "#ffffff",
+//     link: "rgba(85, 85, 85, 0.4)",
+//     text: {
+//       primary: "#1a237e",
+//       secondary: "#2e7d32",
+//       tertiary: "#1565c0",
+//     },
+//     depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
 //   },
-//   link: "rgba(85, 85, 85, 0.4)", // Links between nodes (semi-transparent for readability)
-//   truncation: "#e91e63", // Indicator for truncated text
+//   dark: {
+//     background: "#212121",
+//     link: "rgba(255, 255, 255, 0.4)",
+//     text: {
+//       primary: "#bbdefb",
+//       secondary: "#c8e6c9",
+//       tertiary: "#90caf9",
+//     },
+//     depths: ["#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#212121", "#000000"],
+//   },
 // };
 
-// // **NODE LAYOUT CONFIGURATION:** Customize dimensions and spacing for nodes
+// // Node layout configuration
 // const NODE_CONFIG = {
 //   baseWidth: 130,
 //   baseHeight: 70,
-//   depthScale: 0.9, // Nodes shrink slightly at each level
-//   minScale: 0.6, // Minimum size scale at deepest level
-//   cornerRadius: 10, // Rounded corners
-//   textTruncateLength: 15, // Max chars before filename is truncated
-//   verticalSpacing: 120, // Distance between tree levels
-//   horizontalSpacing: 40, // Distance between sibling nodes
+//   cornerRadius: 10,
+//   textTruncateLength: 15,
 // };
 
-// // **DENDROGRAM COMPONENT:** Renders tree structure and controls layout with D3
 // const Dendrogram = ({ data }) => {
-//   const svgRef = useRef(); // References the SVG container
+//   const svgRef = useRef();
+//   const [darkMode, setDarkMode] = useState(false);
+//   let i = 0; // Initialize node ID counter
 
-//   // **EFFECT:** Executes when the component is mounted
 //   useEffect(() => {
 //     if (!svgRef.current) return;
 
-//     // **SVG & D3 SETUP**: Creates an SVG drawing area
+//     // Clear previous SVG content
+//     d3.select(svgRef.current).selectAll("*").remove();
+
 //     const svg = d3.select(svgRef.current);
 //     const width = window.innerWidth;
 //     const height = window.innerHeight;
 
-//     // Configuring a tree layout in D3
+//     // Set background color based on theme
+//     svg.style("background", darkMode ? COLORS.dark.background : COLORS.light.background);
+
+//     const colorScheme = darkMode ? COLORS.dark : COLORS.light;
+
+//     const g = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
+
 //     const tree = d3
 //       .tree()
-//       .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
-//       .separation((a, b) => (a.parent === b.parent ? 1.2 : 2.4));
+//       .nodeSize([NODE_CONFIG.baseWidth * 1.5, NODE_CONFIG.baseHeight * 2])
+//       .separation((a, b) => (a.parent === b.parent ? 1 : 2));
 
-//     // **DATA STRUCTURE:** Create hierarchy from data
-//     const root = d3.hierarchy(data);
-
-//     // **ZOOM SETUP**: Enable zoom with limits and responsiveness
 //     const zoom = d3
 //       .zoom()
-//       .scaleExtent([0.1, 2]) // Limits of zoom scale
-//       .on("zoom", (event) => {
-//         g.attr("transform", event.transform); // Zooms on SVG group element
-//       });
+//       .scaleExtent([0.1, 2])
+//       .on("zoom", (event) => g.attr("transform", event.transform));
+
 //     svg.call(zoom);
 
-//     // **DRAWING GROUP**: Append a group to contain all elements (nodes & links)
-//     const g = svg.append("g");
+//     // Create hierarchy and store initial children state
+//     const root = d3.hierarchy(data);
+//     root.x0 = 0;
+//     root.y0 = 0;
 
-//     // **UPDATE FUNCTION:** Core function for handling re-rendering on events
+//     root.descendants().forEach((d) => {
+//       d._children = d.children;
+//       // Optionally, collapse nodes here if you want
+//       // d.children = null;
+//     });
+
+//     // Function to update the tree
 //     function update(source) {
-//       // Compute the tree layout on the root data
-//       tree(root);
-//       const nodes = root.descendants();
-//       const links = root.links();
+//       const duration = 750;
 
-//       // **LINKS**: Draws lines between nodes
-//       const link = g.selectAll(".link").data(links, (d) => d.target.data.file);
+//       // Assigns the x and y position for the nodes
+//       const treeData = tree(root);
 
-//       link
-//         .enter()
-//         .append("path")
-//         .attr("class", "link")
-//         .attr(
-//           "d",
-//           d3
-//             .linkVertical()
-//             .x((d) => d.x) // x-coord based on depth
-//             .y((d) => d.y) // y-coord based on hierarchy level
-//         )
-//         .style("stroke", COLORS.link) // Styling links
-//         .style("fill", "none")
-//         .style("stroke-width", 1.5);
+//       // Compute the new tree layout
+//       const nodes = treeData.descendants();
+//       const links = treeData.links();
 
-//       link.exit().remove(); // Removes outdated links
+//       // Normalize for fixed-depth
+//       nodes.forEach((d) => (d.y = d.depth * 180));
 
-//       // **NODES**: Create nodes with rectangles and text
-//       const node = g.selectAll(".node").data(nodes, (d) => d.data.file);
+//       /** Nodes Section **/
 
+//       // Update the nodes...
+//       const node = g.selectAll("g.node").data(nodes, (d) => d.id || (d.id = ++i));
+
+//       // Enter any new nodes at the parent's previous position.
 //       const nodeEnter = node
 //         .enter()
 //         .append("g")
 //         .attr("class", "node")
-//         .attr(
-//           "transform",
-//           (d) => `translate(${source.x0 || d.x},${source.y0 || d.y})`
-//         )
+//         .attr("transform", (d) => `translate(${source.x0},${source.y0})`)
 //         .on("click", (event, d) => {
-//           d.children = d.children ? null : d._children; // Toggle visibility of children
-//           update(d); // Update the layout
+//           // Toggle children on click
+//           if (d.children) {
+//             d._children = d.children;
+//             d.children = null;
+//           } else {
+//             d.children = d._children;
+//             d._children = null;
+//           }
+//           update(d);
 //         });
 
-//       // **NODE STYLING**: Define background rectangles with color gradients
-//       nodeEnter.each(function (d) {
-//         const depth = Math.min(d.depth, COLORS.depths.length - 1); // Limits depth color range
-//         const rect = d3
-//           .select(this)
-//           .append("rect")
-//           .attr("x", -NODE_CONFIG.baseWidth / 2)
-//           .attr("y", -NODE_CONFIG.baseHeight / 2)
-//           .attr("width", NODE_CONFIG.baseWidth)
-//           .attr("height", NODE_CONFIG.baseHeight)
-//           .attr("rx", NODE_CONFIG.cornerRadius)
-//           .style("fill", COLORS.depths[depth])
-//           .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.2))");
+//       // Add rectangles for the nodes
+//       nodeEnter
+//         .append("rect")
+//         .attr("class", "node")
+//         .attr("x", -NODE_CONFIG.baseWidth / 2)
+//         .attr("y", -NODE_CONFIG.baseHeight / 2)
+//         .attr("width", NODE_CONFIG.baseWidth)
+//         .attr("height", NODE_CONFIG.baseHeight)
+//         .attr("rx", NODE_CONFIG.cornerRadius)
+//         .style("fill", (d) => {
+//           const depth = Math.min(d.depth, colorScheme.depths.length - 1);
+//           return colorScheme.depths[depth];
+//         });
 
-//         // **TEXT CONFIGURATION:** Append text for filename, type, and state
-//         const textGroup = d3
-//           .select(this)
-//           .append("g")
-//           .attr("class", "text-group");
+//       // Add text to the nodes
+//       const textGroup = nodeEnter.append("g").attr("class", "text-group");
 
-//         // Display filename with truncation indicator
-//         const fileName = d.data.file || "Unnamed";
-//         const truncatedName =
-//           fileName.length > NODE_CONFIG.textTruncateLength
-//             ? `${fileName.slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
-//             : fileName;
+//       // Component name
+//       const fileName = (d) => d.data.file || "Unnamed";
+//       const truncatedName = (d) =>
+//         fileName(d).length > NODE_CONFIG.textTruncateLength
+//           ? `${fileName(d).slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
+//           : fileName(d);
 
-//         textGroup
-//           .append("text")
-//           .attr("y", -NODE_CONFIG.baseHeight / 4)
-//           .attr("text-anchor", "middle")
-//           .style("fill", COLORS.text.primary)
-//           .text(truncatedName);
+//       textGroup
+//         .append("text")
+//         .attr("dy", "-0.6em")
+//         .attr("text-anchor", "middle")
+//         .style("fill", colorScheme.text.primary)
+//         .text((d) => truncatedName(d));
 
-//         // **HOVER TOOLTIP**: Show full filename on hover if truncated
-//         if (truncatedName !== fileName) {
-//           textGroup.append("title").text(fileName); // Tooltip with full name
-//         }
+//       // Add tooltip for truncated names
+//       textGroup
+//         .append("title")
+//         .text((d) => (truncatedName(d) !== fileName(d) ? fileName(d) : ""));
 
-//         // Component type text (e.g., Functional, Class, etc.)
-//         textGroup
-//           .append("text")
-//           .attr("y", 0)
-//           .attr("text-anchor", "middle")
-//           .style("fill", COLORS.text.secondary)
-//           .text(d.data.type || "Unknown");
+//       // Component type
+//       textGroup
+//         .append("text")
+//         .attr("dy", "0em")
+//         .attr("text-anchor", "middle")
+//         .style("fill", colorScheme.text.secondary)
+//         .text((d) => d.data.type || "Unknown");
 
-//         // State info (number of state variables) for the component
-//         textGroup
-//           .append("text")
-//           .attr("y", NODE_CONFIG.baseHeight / 4)
-//           .attr("text-anchor", "middle")
-//           .style("fill", COLORS.text.tertiary)
-//           .text(`State: ${d.data.state ? d.data.state.length : 0}`);
-//       });
+//       // State count
+//       textGroup
+//         .append("text")
+//         .attr("dy", "1.2em")
+//         .attr("text-anchor", "middle")
+//         .style("fill", colorScheme.text.tertiary)
+//         .text((d) => `State: ${d.data.state ? d.data.state.length : 0}`);
 
-//       // **NODE TRANSITIONS**: Adds smooth transitions for position updates
+//       // UPDATE
 //       const nodeUpdate = nodeEnter.merge(node);
+
+//       // Transition to the proper position for the nodes
 //       nodeUpdate
 //         .transition()
-//         .duration(750)
+//         .duration(duration)
 //         .attr("transform", (d) => `translate(${d.x},${d.y})`);
 
-//       // Store positions for transitions
+//       // Remove any exiting nodes
+//       const nodeExit = node
+//         .exit()
+//         .transition()
+//         .duration(duration)
+//         .attr("transform", (d) => `translate(${source.x},${source.y})`)
+//         .remove();
+
+//       // On exit reduce the node rectangles size to 0
+//       nodeExit.select("rect").attr("width", 0).attr("height", 0);
+
+//       /** Links Section **/
+
+//       // Update the links...
+//       const link = g.selectAll("path.link").data(links, (d) => d.target.id);
+
+//       // Enter any new links at the parent's previous position.
+//       const linkEnter = link
+//         .enter()
+//         .insert("path", "g")
+//         .attr("class", "link")
+//         .attr("d", () => {
+//           const o = { x: source.x0, y: source.y0 };
+//           return diagonal(o, o);
+//         })
+//         .style("fill", "none")
+//         .style("stroke", colorScheme.link)
+//         .style("stroke-width", "1.5px");
+
+//       // UPDATE
+//       const linkUpdate = linkEnter.merge(link);
+
+//       // Transition back to the parent element position
+//       linkUpdate
+//         .transition()
+//         .duration(duration)
+//         .attr("d", (d) => diagonal(d.source, d.target));
+
+//       // Remove any exiting links
+//       link
+//         .exit()
+//         .transition()
+//         .duration(duration)
+//         .attr("d", () => {
+//           const o = { x: source.x, y: source.y };
+//           return diagonal(o, o);
+//         })
+//         .remove();
+
+//       // Store the old positions for transition.
 //       nodes.forEach((d) => {
 //         d.x0 = d.x;
 //         d.y0 = d.y;
 //       });
-
-//       // Remove outdated nodes
-//       node.exit().remove();
 //     }
 
-//     // Initial render setup: Set up the root node and render
+//     // Creates a curved (diagonal) path from parent to the child nodes
+//     function diagonal(s, d) {
+//       return `M ${s.x},${s.y}
+//               C ${(s.x + d.x) / 2},${s.y}
+//                 ${(s.x + d.x) / 2},${d.y}
+//                 ${d.x},${d.y}`;
+//     }
+
+//     // Start the visualization with a zoom-in effect
+//     svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(2));
+
+//     // Initial update to render the tree
 //     update(root);
 
-//     // Set initial zoom position and scale
-//     const initialTransform = d3.zoomIdentity
-//       .translate(width / 2, height / 4)
-//       .scale(0.8);
-//     svg.call(zoom.transform, initialTransform);
+//     // Animate zoom-out to fit the tree
+//     svg
+//       .transition()
+//       .duration(2000)
+//       .call(
+//         zoom.transform,
+//         d3.zoomIdentity.translate(width / 2, 50).scale(0.8),
+//         d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+//       );
 
+//     // Cleanup function
 //     return () => {
-//       svg.selectAll("*").remove(); // Clean up when component unmounts
+//       svg.selectAll("*").remove();
 //     };
-//   }, [data]);
+//   }, [data, darkMode]);
 
-//   // **SVG RETURN**: Returns the SVG element with a responsive setup
 //   return (
-//     <svg
-//       ref={svgRef}
-//       width="100vw"
-//       height="100vh"
-//       style={{ background: "#f0f0f0" }} // Background for contrast
-//     >
-//       <style>{`
-//         .link { stroke: ${COLORS.link}; stroke-width: 1.5px; }
-//         .node text { font-size: 12px; font-weight: 500; }
-//         .text-group text { font-family: sans-serif; }
-//       `}</style>
-//     </svg>
+//     <div>
+//       {/* Dark Mode Toggle */}
+//       <button
+//         onClick={() => setDarkMode((prev) => !prev)}
+//         style={{
+//           position: "absolute",
+//           top: 10,
+//           right: 10,
+//           zIndex: 1,
+//           padding: "10px 20px",
+//           cursor: "pointer",
+//         }}
+//       >
+//         {darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+//       </button>
+//       <svg ref={svgRef} width="100vw" height="100vh">
+//         <style>{`
+//           .node rect {
+//             cursor: pointer;
+//             stroke-width: 1.5px;
+//           }
+//           .node text {
+//             font-size: 12px;
+//             font-family: sans-serif;
+//           }
+//           .link {
+//             fill: none;
+//             stroke-width: 1.5px;
+//           }
+//         `}</style>
+//       </svg>
+//     </div>
 //   );
 // };
 
 // export default Dendrogram;
 
-// // import React, { useRef, useEffect } from "react";
+
+// // import React, { useRef, useEffect, useState } from "react";
 // // import * as d3 from "d3";
-// // import AppHeader from './AppHeader';
-// // import { createRoot } from "react-dom/client";
 
-// // // D3 Configuration constants
+// // // Visual styling constants
 // // const COLORS = {
-// //   initial: "#ff69b4",
-// //   depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
-// //   text: { primary: "#1a237e", secondary: "#2e7d32", tertiary: "#1565c0" },
-// //   link: "rgba(85, 85, 85, 0.4)",
+// //   light: {
+// //     background: "#ffffff",
+// //     link: "rgba(85, 85, 85, 0.4)",
+// //     text: {
+// //       primary: "#1a237e",
+// //       secondary: "#2e7d32",
+// //       tertiary: "#1565c0",
+// //     },
+// //     depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
+// //   },
+// //   dark: {
+// //     background: "#212121",
+// //     link: "rgba(255, 255, 255, 0.4)",
+// //     text: {
+// //       primary: "#bbdefb",
+// //       secondary: "#c8e6c9",
+// //       tertiary: "#90caf9",
+// //     },
+// //     depths: ["#6d4c41", "#5d4037", "#4e342e", "#3e2723", "#212121", "#000000"],
+// //   },
 // // };
+
+// // // Node layout configuration
 // // const NODE_CONFIG = {
-// //   baseWidth: 130, baseHeight: 70, depthScale: 0.9, minScale: 0.6, cornerRadius: 10, textTruncateLength: 15
+// //   baseWidth: 130,
+// //   baseHeight: 70,
+// //   cornerRadius: 10,
+// //   textTruncateLength: 15,
 // // };
-
-// // const container = document.getElementById('root') || document.createElement('div');
-// // if (!container.id) { container.id = 'root'; document.body.appendChild(container); }
-// // const root = createRoot(container);
-
-// // function calculateComponentStats(data) {
-// //   let functionalCount = 0, classCount = 0, nullCount = 0;
-// //   function traverse(node) {
-// //     if (node.type === 'FunctionComponent') functionalCount++;
-// //     else if (node.type === 'ClassComponent') classCount++;
-// //     else nullCount++;
-// //     if (node.children) node.children.forEach(traverse);
-// //   }
-// //   traverse(data);
-// //   const totalComponents = Math.max(1, functionalCount + classCount + nullCount);
-// //   return { functionalCount, classCount, nullCount, totalComponents };
-// // }
-
-// // window.addEventListener("message", (event) => {
-// //   if (event.data.type === "astData") {
-// //     const astData = event.data.payload.treeData || {};
-// //     const stats = calculateComponentStats(astData);
-// //     root.render(
-// //       <div className="h-screen w-screen">
-// //         <AppHeader
-// //           stats={stats}
-// //           appName={event.data.appName || "React App"}
-// //           filePath={event.data.payload.filePath || "Unknown Component Path"}
-// //         />
-// //         {Object.keys(astData).length > 0 ? (
-// //           <Dendrogram data={astData} />
-// //         ) : (
-// //           <p>No component data to display</p>
-// //         )}
-// //       </div>
-// //     );
-// //   }
-// // });
 
 // // const Dendrogram = ({ data }) => {
 // //   const svgRef = useRef();
+// //   const [darkMode, setDarkMode] = useState(false);
 
 // //   useEffect(() => {
 // //     if (!svgRef.current) return;
+
+// //     // Clear previous SVG content
+// //     d3.select(svgRef.current).selectAll("*").remove();
+
 // //     const svg = d3.select(svgRef.current);
-// //     const margin = { top: 80, right: 20, bottom: 20, left: 20 };
-// //     const width = window.innerWidth - margin.left - margin.right;
-// //     const height = window.innerHeight - margin.top - margin.bottom;
-// //     const tree = d3.tree().nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2]);
-// //     const root = d3.hierarchy(data);
-// //     root.descendants().forEach(d => (d._children = d.children));
+// //     const width = window.innerWidth;
+// //     const height = window.innerHeight;
 
-// //     const zoom = d3.zoom().scaleExtent([0.1, 2]).on("zoom", (event) => g.attr("transform", event.transform));
+// //     // Set background color based on theme
+// //     svg.style("background", darkMode ? COLORS.dark.background : COLORS.light.background);
+
+// //     const colorScheme = darkMode ? COLORS.dark : COLORS.light;
+
+// //     const g = svg.append("g").attr("transform", `translate(${width / 2},${height / 2})`);
+
+// //     const tree = d3
+// //       .tree()
+// //       .nodeSize([NODE_CONFIG.baseWidth * 1.5, NODE_CONFIG.baseHeight * 2])
+// //       .separation((a, b) => (a.parent === b.parent ? 1 : 2));
+
+// //     const zoom = d3
+// //       .zoom()
+// //       .scaleExtent([0.1, 2])
+// //       .on("zoom", (event) => g.attr("transform", event.transform));
+
 // //     svg.call(zoom);
-// //     const g = svg.append("g");
 
+// //     // Create hierarchy and store initial children state
+// //     const root = d3.hierarchy(data);
+// //     root.x0 = 0;
+// //     root.y0 = 0;
+
+// //     root.descendants().forEach((d) => {
+// //       d._children = d.children;
+// //       // Optionally, collapse nodes here if you want
+// //       // d.children = null;
+// //     });
+
+// //     // Function to update the tree
 // //     function update(source) {
-// //       tree(root);
-// //       const nodes = root.descendants();
-// //       const links = root.links();
+// //       const duration = 750;
 
-// //       const link = g.selectAll(".link").data(links, d => d.target.data.file);
-// //       const linkEnter = link.enter().append("path").attr("class", "link").attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
-// //       link.merge(linkEnter).transition().duration(750).attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
-// //       link.exit().transition().duration(750).remove();
+// //       // Assigns the x and y position for the nodes
+// //       const treeData = tree(root);
 
-// //       const node = g.selectAll(".node").data(nodes, d => d.data.file);
-// //       const nodeEnter = node.enter().append("g").attr("class", "node").attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
-// //         .on("click", (event, d) => { d.children = d.children ? null : d._children; update(d); });
+// //       // Compute the new tree layout
+// //       const nodes = treeData.descendants();
+// //       const links = treeData.links();
 
-// //       nodeEnter.each(function(d) {
-// //         const depth = Math.min(d.depth, COLORS.depths.length - 1);
-// //         d3.select(this).append("rect").attr("x", -NODE_CONFIG.baseWidth / 2).attr("y", -NODE_CONFIG.baseHeight / 2)
-// //           .attr("width", NODE_CONFIG.baseWidth).attr("height", NODE_CONFIG.baseHeight)
-// //           .attr("rx", NODE_CONFIG.cornerRadius).attr("ry", NODE_CONFIG.cornerRadius)
-// //           .style("fill", COLORS.depths[depth]);
+// //       // Normalize for fixed-depth
+// //       nodes.forEach((d) => (d.y = d.depth * 180));
 
-// //         const textGroup = d3.select(this).append("g").attr("class", "text-group");
-// //         textGroup.append("text").attr("y", -NODE_CONFIG.baseHeight / 4).attr("text-anchor", "middle").style("fill", COLORS.text.primary)
-// //           .text(d.data.file ? d.data.file.slice(0, NODE_CONFIG.textTruncateLength) : "Unnamed");
+// //       /** Nodes Section **/
 
-// //         textGroup.append("text").attr("y", 0).attr("text-anchor", "middle").style("fill", COLORS.text.secondary)
-// //           .text(d.data.type || "Unknown");
+// //       // Update the nodes...
+// //       const node = g.selectAll("g.node").data(nodes, (d) => d.id || (d.id = ++i));
 
-// //         textGroup.append("text").attr("y", NODE_CONFIG.baseHeight / 4).attr("text-anchor", "middle").style("fill", COLORS.text.tertiary)
-// //           .text(`State: ${d.data.state ? d.data.state.length : 0}`);
-// //       });
+// //       // Enter any new modes at the parent's previous position.
+// //       const nodeEnter = node
+// //         .enter()
+// //         .append("g")
+// //         .attr("class", "node")
+// //         .attr("transform", (d) => `translate(${source.x0},${source.y0})`)
+// //         .on("click", (event, d) => {
+// //           // Toggle children on click
+// //           if (d.children) {
+// //             d._children = d.children;
+// //             d.children = null;
+// //           } else {
+// //             d.children = d._children;
+// //             d._children = null;
+// //           }
+// //           update(d);
+// //         });
 
+// //       // Add rectangles for the nodes
+// //       nodeEnter
+// //         .append("rect")
+// //         .attr("class", "node")
+// //         .attr("x", -NODE_CONFIG.baseWidth / 2)
+// //         .attr("y", -NODE_CONFIG.baseHeight / 2)
+// //         .attr("width", NODE_CONFIG.baseWidth)
+// //         .attr("height", NODE_CONFIG.baseHeight)
+// //         .attr("rx", NODE_CONFIG.cornerRadius)
+// //         .style("fill", (d) => {
+// //           const depth = Math.min(d.depth, colorScheme.depths.length - 1);
+// //           return colorScheme.depths[depth];
+// //         });
+
+// //       // Add text to the nodes
+// //       const textGroup = nodeEnter.append("g").attr("class", "text-group");
+
+// //       // Component name
+// //       const fileName = (d) => d.data.file || "Unnamed";
+// //       const truncatedName = (d) =>
+// //         fileName(d).length > NODE_CONFIG.textTruncateLength
+// //           ? `${fileName(d).slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
+// //           : fileName(d);
+
+// //       textGroup
+// //         .append("text")
+// //         .attr("dy", "-0.6em")
+// //         .attr("text-anchor", "middle")
+// //         .style("fill", colorScheme.text.primary)
+// //         .text((d) => truncatedName(d));
+
+// //       // Add tooltip for truncated names
+// //       textGroup
+// //         .append("title")
+// //         .text((d) => (truncatedName(d) !== fileName(d) ? fileName(d) : ""));
+
+// //       // Component type
+// //       textGroup
+// //         .append("text")
+// //         .attr("dy", "0em")
+// //         .attr("text-anchor", "middle")
+// //         .style("fill", colorScheme.text.secondary)
+// //         .text((d) => d.data.type || "Unknown");
+
+// //       // State count
+// //       textGroup
+// //         .append("text")
+// //         .attr("dy", "1.2em")
+// //         .attr("text-anchor", "middle")
+// //         .style("fill", colorScheme.text.tertiary)
+// //         .text((d) => `State: ${d.data.state ? d.data.state.length : 0}`);
+
+// //       // UPDATE
 // //       const nodeUpdate = nodeEnter.merge(node);
-// //       nodeUpdate.transition().duration(750).attr("transform", d => `translate(${d.x},${d.y})`);
-// //       nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
-// //       node.exit().transition().duration(750).attr("transform", d => `translate(${source.x},${source.y})`).remove();
+
+// //       // Transition to the proper position for the nodes
+// //       nodeUpdate
+// //         .transition()
+// //         .duration(duration)
+// //         .attr("transform", (d) => `translate(${d.x},${d.y})`);
+
+// //       // Remove any exiting nodes
+// //       const nodeExit = node
+// //         .exit()
+// //         .transition()
+// //         .duration(duration)
+// //         .attr("transform", (d) => `translate(${source.x},${source.y})`)
+// //         .remove();
+
+// //       // On exit reduce the node circles size to 0
+// //       nodeExit.select("rect").attr("width", 0).attr("height", 0);
+
+// //       /** Links Section **/
+
+// //       // Update the links...
+// //       const link = g.selectAll("path.link").data(links, (d) => d.target.id);
+
+// //       // Enter any new links at the parent's previous position.
+// //       const linkEnter = link
+// //         .enter()
+// //         .insert("path", "g")
+// //         .attr("class", "link")
+// //         .attr("d", () => {
+// //           const o = { x: source.x0, y: source.y0 };
+// //           return diagonal(o, o);
+// //         })
+// //         .style("fill", "none")
+// //         .style("stroke", colorScheme.link)
+// //         .style("stroke-width", "1.5px");
+
+// //       // UPDATE
+// //       const linkUpdate = linkEnter.merge(link);
+
+// //       // Transition back to the parent element position
+// //       linkUpdate
+// //         .transition()
+// //         .duration(duration)
+// //         .attr("d", (d) => diagonal(d.source, d.target));
+
+// //       // Remove any exiting links
+// //       link
+// //         .exit()
+// //         .transition()
+// //         .duration(duration)
+// //         .attr("d", () => {
+// //           const o = { x: source.x, y: source.y };
+// //           return diagonal(o, o);
+// //         })
+// //         .remove();
+
+// //       // Store the old positions for transition.
+// //       nodes.forEach((d) => {
+// //         d.x0 = d.x;
+// //         d.y0 = d.y;
+// //       });
 // //     }
 
-// //     update(root);
-// //   }, [data]);
+// //     // Creates a curved (diagonal) path from parent to the child nodes
+// //     function diagonal(s, d) {
+// //       return `M ${s.x},${s.y}
+// //               C ${(s.x + d.x) / 2},${s.y}
+// //                 ${(s.x + d.x) / 2},${d.y}
+// //                 ${d.x},${d.y}`;
+// //     }
 
-// //   return <svg ref={svgRef} width="95vw" height="90vh" className="bg-gray-50"></svg>;
+// //     // Start the visualization with a zoom-in effect
+// //     svg.call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(2));
+
+// //     // Initial update to render the tree
+// //     update(root);
+
+// //     // Animate zoom-out to fit the tree
+// //     svg
+// //       .transition()
+// //       .duration(2000)
+// //       .call(
+// //         zoom.transform,
+// //         d3.zoomIdentity.translate(width / 2, 50).scale(0.8),
+// //         d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+// //       );
+
+// //     // Cleanup function
+// //     return () => {
+// //       svg.selectAll("*").remove();
+// //     };
+// //   }, [data, darkMode]);
+
+// //   return (
+// //     <div>
+// //       {/* Dark Mode Toggle */}
+// //       <button
+// //         onClick={() => setDarkMode((prev) => !prev)}
+// //         style={{
+// //           position: "absolute",
+// //           top: 10,
+// //           right: 10,
+// //           zIndex: 1,
+// //           padding: "10px 20px",
+// //           cursor: "pointer",
+// //         }}
+// //       >
+// //         {darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+// //       </button>
+// //       <svg ref={svgRef} width="100vw" height="100vh">
+// //         <style>{`
+// //           .node rect {
+// //             cursor: pointer;
+// //             stroke-width: 1.5px;
+// //           }
+// //           .node text {
+// //             font-size: 12px;
+// //             font-family: sans-serif;
+// //           }
+// //           .link {
+// //             fill: none;
+// //             stroke-width: 1.5px;
+// //           }
+// //         `}</style>
+// //       </svg>
+// //     </div>
+// //   );
 // // };
 
 // // export default Dendrogram;
 
-// // // import React, { useRef, useEffect } from "react";
-// // // import { createRoot } from "react-dom/client";
-// // // import * as d3 from "d3";
-// // // import AppHeader from './AppHeader';
 
-// // // // Configuration constants
+// // // import React, { useRef, useEffect } from "react";
+// // // import * as d3 from "d3";
+
 // // // const COLORS = {
-// // //   initial: "#ff69b4",       // Starting pink
-// // //   transition: "#ffeb3b",    // Transition yellow
-// // //   depths: [                 // Final depth-based colors
-// // //     "#ffb74d",             // Root (Level 0)
-// // //     "#ffa726",             // Level 1
-// // //     "#ff9800",             // Level 2
-// // //     "#fb8c00",             // Level 3
-// // //     "#f57c00",             // Level 4
-// // //     "#ef6c00"              // Level 5+
-// // //   ],
+// // //   depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
 // // //   text: {
-// // //     primary: "#1a237e",    // Dark blue for filenames
-// // //     secondary: "#2e7d32",  // Dark green for type
-// // //     tertiary: "#1565c0"    // Blue for state
+// // //     primary: "#1a237e",
+// // //     secondary: "#2e7d32",
+// // //     tertiary: "#1565c0"
 // // //   },
-// // //   link: "rgba(85, 85, 85, 0.4)", // Semi-transparent connections
-// // //   truncation: "#e91e63"     // Pink indicator for truncated names
+// // //   link: "rgba(85, 85, 85, 0.4)"
 // // // };
 
 // // // const NODE_CONFIG = {
 // // //   baseWidth: 130,
 // // //   baseHeight: 70,
-// // //   depthScale: 0.9,         // Size reduction per level
-// // //   minScale: 0.6,           // Minimum size (60% of base)
 // // //   cornerRadius: 10,
-// // //   textTruncateLength: 15,
-// // //   verticalSpacing: 120,
-// // //   horizontalSpacing: 40
+// // //   textTruncateLength: 15
 // // // };
-
-// // // function calculateComponentStats(data) {
-// // //   let functionalCount = 0;
-// // //   let classCount = 0;
-// // //   let nullCount = 0;
-
-// // //   function traverse(node) {
-// // //     if (node.type === 'FunctionComponent') functionalCount++;
-// // //     else if (node.type === 'ClassComponent') classCount++;
-// // //     else nullCount++;
-
-// // //     if (node.children) {
-// // //       node.children.forEach(traverse);
-// // //     }
-// // //   }
-
-// // //   traverse(data);
-
-// // //   const totalComponents = Math.max(1, functionalCount + classCount + nullCount);
-
-// // //   return {
-// // //     functionalCount,
-// // //     classCount,
-// // //     nullCount,
-// // //     totalComponents
-// // //   };
-// // // }
-
-// // // window.addEventListener("message", (event) => {
-// // //   if (event.data.type === "astData") {
-// // //     const astData = event.data.payload;
-// // //     const stats = calculateComponentStats(astData);
-// // //     const container = document.getElementById("root");
-// // //     const root = createRoot(container);
-
-// // //     root.render(
-// // //       <div className="h-screen w-screen">
-// // //         <AppHeader
-// // //           stats={stats}
-// // //           appName={astData.file || "React App"}
-// // //           filePath="/src/App.tsx"
-// // //         />
-// // //         <Dendrogram data={astData} />
-// // //       </div>
-// // //     );
-// // //   }
-// // // });
 
 // // // const Dendrogram = ({ data }) => {
 // // //   const svgRef = useRef();
@@ -636,273 +934,168 @@ export default Dendrogram;
 // // //     if (!svgRef.current) return;
 
 // // //     const svg = d3.select(svgRef.current);
-// // //     const margin = { top: 80, right: 20, bottom: 20, left: 20 };
-// // //     const width = window.innerWidth - margin.left - margin.right;
-// // //     const height = window.innerHeight - margin.top - margin.bottom;
+// // //     const width = window.innerWidth;
+// // //     const height = window.innerHeight;
 
-// // //     // Tree layout configuration
-// // //     const tree = d3
-// // //       .tree()
+// // //     const tree = d3.tree()
 // // //       .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
-// // //       .separation((a, b) => {
-// // //         return a.parent === b.parent ? 1.2 : 2.4;
-// // //       });
+// // //       .separation((a, b) => (a.parent === b.parent ? 1.2 : 2.4));
 
+// // //     // Create hierarchy and STORE initial children state
 // // //     const root = d3.hierarchy(data);
-// // //     root.descendants().forEach((d) => (d._children = d.children));
-
-// // //     const zoom = d3.zoom()
-// // //       .scaleExtent([0.1, 2])
-// // //       .on("zoom", (event) => {
-// // //         g.attr("transform", event.transform);
-// // //       });
-
-// // //     svg.call(zoom);
+// // //     root.x0 = 0;
+// // //     root.y0 = 0;
+    
+// // //     // Store initial children state for ALL nodes
+// // //     root.descendants().forEach(d => {
+// // //       d._children = d.children;  // Backup the initial children
+// // //       d.x0 = 0;                 // Set initial positions
+// // //       d.y0 = 0;
+// // //     });
 
 // // //     const g = svg.append("g");
 
-// // //     // Helper functions
-// // //     const getNodeSize = (depth) => {
-// // //       const scale = Math.max(
-// // //         NODE_CONFIG.minScale,
-// // //         Math.pow(NODE_CONFIG.depthScale, depth)
-// // //       );
-// // //       return {
-// // //         width: NODE_CONFIG.baseWidth * scale,
-// // //         height: NODE_CONFIG.baseHeight * scale
-// // //       };
-// // //     };
-
-// // //     const formatNodeName = (name) => {
-// // //       const maxLength = NODE_CONFIG.textTruncateLength;
-// // //       if (!name) return { display: 'Unnamed', truncated: false };
-// // //       if (name.length <= maxLength) {
-// // //         return { display: name, truncated: false };
-// // //       }
-// // //       return {
-// // //         display: `${name.slice(0, maxLength - 3)}...`,
-// // //         truncated: true
-// // //       };
-// // //     };
+// // //     const zoom = d3.zoom()
+// // //       .scaleExtent([0.1, 2])
+// // //       .on("zoom", (event) => g.attr("transform", event.transform));
+// // //     svg.call(zoom);
 
 // // //     function update(source) {
 // // //       tree(root);
+
 // // //       const nodes = root.descendants();
 // // //       const links = root.links();
 
-// // //       // Update links
-// // //       const link = g
-// // //         .selectAll(".link")
-// // //         .data(links, d => d.target.data.file);
-
-// // //       const linkEnter = link
-// // //         .enter()
-// // //         .append("path")
-// // //         .attr("class", "link")
-// // //         .attr("d", d3.linkVertical()
-// // //           .x(d => d.x)
-// // //           .y(d => d.y)
-// // //         );
-
-// // //       link.merge(linkEnter)
-// // //         .transition()
-// // //         .duration(750)
-// // //         .attr("d", d3.linkVertical()
-// // //           .x(d => d.x)
-// // //           .y(d => d.y)
-// // //         );
-
-// // //       link.exit()
-// // //         .transition()
-// // //         .duration(750)
-// // //         .remove();
-
-// // //       // Update nodes
-// // //       const node = g
-// // //         .selectAll(".node")
+// // //       // Update the nodes
+// // //       const node = g.selectAll("g.node")
 // // //         .data(nodes, d => d.data.file);
 
-// // //       const nodeEnter = node
-// // //         .enter()
-// // //         .append("g")
+// // //       // Enter new nodes at parent's previous position
+// // //       const nodeEnter = node.enter().append("g")
 // // //         .attr("class", "node")
-// // //         .attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
-// // //         .on("click", (event, d) => {
-// // //           d.children = d.children ? null : d._children;
-// // //           update(d);
+// // //         .attr("transform", d => `translate(${source.x0},${source.y0})`);
+
+// // //       // Add Node Rectangle
+// // //       nodeEnter.append("rect")
+// // //         .attr("x", -NODE_CONFIG.baseWidth / 2)
+// // //         .attr("y", -NODE_CONFIG.baseHeight / 2)
+// // //         .attr("width", NODE_CONFIG.baseWidth)
+// // //         .attr("height", NODE_CONFIG.baseHeight)
+// // //         .attr("rx", NODE_CONFIG.cornerRadius)
+// // //         .style("fill", d => {
+// // //           const depth = Math.min(d.depth, COLORS.depths.length - 1);
+// // //           return COLORS.depths[depth];
 // // //         });
 
-// // //       // Add node rectangles with depth-based styling
-// // //       nodeEnter.each(function(d) {
-// // //         const nodeSize = getNodeSize(d.depth);
-// // //         const depth = Math.min(d.depth, COLORS.depths.length - 1);
-
-// // //         // Background rectangle
-// // //         d3.select(this)
-// // //           .append("rect")
-// // //           .attr("x", -nodeSize.width / 2)
-// // //           .attr("y", -nodeSize.height / 2)
-// // //           .attr("width", nodeSize.width)
-// // //           .attr("height", nodeSize.height)
-// // //           .attr("rx", NODE_CONFIG.cornerRadius)
-// // //           .attr("ry", NODE_CONFIG.cornerRadius)
-// // //           .style("fill", COLORS.initial)
-// // //           .attr("data-depth", depth)
-// // //           .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.2))");
-
-// // //         const { display, truncated } = formatNodeName(d.data.file);
-
-// // //         // Create text group
-// // //         const textGroup = d3.select(this)
-// // //           .append("g")
-// // //           .attr("class", "text-group");
-
-// // //         // Filename
-// // //         textGroup
-// // //           .append("text")
-// // //           .attr("y", -nodeSize.height / 4)
-// // //           .attr("text-anchor", "middle")
-// // //           .style("fill", COLORS.text.primary)
-// // //           .text(display);
-
-// // //         if (truncated) {
-// // //           textGroup
-// // //             .append("circle")
-// // //             .attr("cx", nodeSize.width / 2 - 8)
-// // //             .attr("cy", -nodeSize.height / 4)
-// // //             .attr("r", 3)
-// // //             .style("fill", COLORS.truncation);
-
-// // //           textGroup
-// // //             .append("title")
-// // //             .text(d.data.file);
+// // //       // Add Click Handler
+// // //       nodeEnter.on("click", (event, d) => {
+// // //         if (d.children) {
+// // //           d._children = d.children;
+// // //           d.children = null;
+// // //         } else {
+// // //           d.children = d._children;
+// // //           d._children = null;
 // // //         }
-
-// // //         // Component type
-// // //         textGroup
-// // //           .append("text")
-// // //           .attr("y", 0)
-// // //           .attr("text-anchor", "middle")
-// // //           .style("fill", COLORS.text.secondary)
-// // //           .text(d.data.type);
-
-// // //         // State count
-// // //         const stateText = textGroup
-// // //           .append("text")
-// // //           .attr("y", nodeSize.height / 4)
-// // //           .attr("text-anchor", "middle")
-// // //           .style("fill", COLORS.text.tertiary)
-// // //           .style("cursor", "pointer")
-// // //           .text(`State: ${d.data.state.length}`)
-// // //           .on("click", function(event) {
-// // //             event.stopPropagation();
-// // //             showStateDetails(d, this);
-// // //           });
+// // //         update(d);
 // // //       });
 
-// // //       function showStateDetails(d, element) {
-// // //         g.selectAll(".state-details").remove();
+// // //       // Add text group
+// // //       const textGroup = nodeEnter.append("g")
+// // //         .attr("class", "text-group");
 
-// // //         const stateDetails = g
-// // //           .append("g")
-// // //           .attr("class", "state-details")
-// // //           .attr("transform", `translate(${d.x + 100},${d.y - 30})`);
-
-// // //         stateDetails
-// // //           .append("rect")
-// // //           .attr("x", -170)
-// // //           .attr("y", 80)
-// // //           .attr("width", 150)
-// // //           .attr("height", d.data.state.length * 20 + 20)
-// // //           .attr("rx", 5)
-// // //           .attr("ry", 5)
-// // //           .style("fill", "#fff")
-// // //           .style("stroke", COLORS.text.tertiary)
-// // //           .style("stroke-width", "1px")
-// // //           .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.1))");
-
-// // //         stateDetails
-// // //           .append("text")
-// // //           .attr("x", -35)
-// // //           .attr("y", 95)
-// // //           .text("×")
-// // //           .style("fill", COLORS.text.tertiary)
-// // //           .style("cursor", "pointer")
-// // //           .style("font-size", "16px")
-// // //           .on("click", () => stateDetails.remove());
-
-// // //         d.data.state.forEach((item, i) => {
-// // //           stateDetails
-// // //             .append("text")
-// // //             .attr("x", -160)
-// // //             .attr("y", i * 20 + 100)
-// // //             .text(item)
-// // //             .style("fill", COLORS.text.primary)
-// // //             .style("font-size", "12px");
+// // //       // Add file name
+// // //       textGroup.append("text")
+// // //         .attr("y", -NODE_CONFIG.baseHeight / 4)
+// // //         .attr("text-anchor", "middle")
+// // //         .style("fill", COLORS.text.primary)
+// // //         .text(d => {
+// // //           const fileName = d.data.file || "Unnamed";
+// // //           return fileName.length > NODE_CONFIG.textTruncateLength
+// // //             ? fileName.substring(0, NODE_CONFIG.textTruncateLength - 3) + "..."
+// // //             : fileName;
 // // //         });
-// // //       }
 
-// // //       // Handle node updates
+// // //       // Add component type
+// // //       textGroup.append("text")
+// // //         .attr("y", 0)
+// // //         .attr("text-anchor", "middle")
+// // //         .style("fill", COLORS.text.secondary)
+// // //         .text(d => d.data.type || "Unknown");
+
+// // //       // Add state count
+// // //       textGroup.append("text")
+// // //         .attr("y", NODE_CONFIG.baseHeight / 4)
+// // //         .attr("text-anchor", "middle")
+// // //         .style("fill", COLORS.text.tertiary)
+// // //         .text(d => `State: ${d.data.state ? d.data.state.length : 0}`);
+
+// // //       // Update all nodes to new position with transition
 // // //       const nodeUpdate = nodeEnter.merge(node);
-
-// // //       nodeUpdate
-// // //         .transition()
+// // //       nodeUpdate.transition()
 // // //         .duration(750)
 // // //         .attr("transform", d => `translate(${d.x},${d.y})`);
 
-// // //       // Store positions for transitions
-// // //       nodes.forEach(d => {
-// // //         d.x0 = d.x;
-// // //         d.y0 = d.y;
-// // //       });
-
 // // //       // Remove old nodes
-// // //       node.exit()
+// // //       const nodeExit = node.exit()
 // // //         .transition()
 // // //         .duration(750)
 // // //         .attr("transform", d => `translate(${source.x},${source.y})`)
 // // //         .remove();
 
-// // //       // Transition to depth-based colors
-// // //       setTimeout(() => {
-// // //         g.selectAll("rect")
-// // //           .transition()
-// // //           .duration(2000)
-// // //           .style("fill", d => COLORS.depths[Math.min(d.depth, COLORS.depths.length - 1)]);
-// // //       }, 1000);
+// // //       // Update the links
+// // //       const link = g.selectAll("path.link")
+// // //         .data(links, d => d.target.data.file);
+
+// // //       // Enter new links at parent's previous position
+// // //       const linkEnter = link.enter().insert("path", "g")
+// // //         .attr("class", "link")
+// // //         .attr("d", d3.linkVertical()
+// // //           .x(d => d.x)
+// // //           .y(d => d.y));
+
+// // //       // Update link positions with transition
+// // //       link.merge(linkEnter)
+// // //         .transition()
+// // //         .duration(750)
+// // //         .attr("d", d3.linkVertical()
+// // //           .x(d => d.x)
+// // //           .y(d => d.y));
+
+// // //       // Remove old links with transition
+// // //       link.exit()
+// // //         .transition()
+// // //         .duration(750)
+// // //         .attr("d", d3.linkVertical()
+// // //           .x(() => source.x)
+// // //           .y(() => source.y))
+// // //         .remove();
+
+// // //       // Store the old positions for transition
+// // //       nodes.forEach(d => {
+// // //         d.x0 = d.x;
+// // //         d.y0 = d.y;
+// // //       });
 // // //     }
 
 // // //     // Initial render
 // // //     update(root);
 
-// // //     // Initial view positioning
+// // //     // Initial position
 // // //     const initialTransform = d3.zoomIdentity
 // // //       .translate(width / 2, height / 4)
 // // //       .scale(0.8);
-
 // // //     svg.call(zoom.transform, initialTransform);
 
-// // //     // Zoom out animation
-// // //     setTimeout(() => {
-// // //       svg.transition()
-// // //         .duration(2000)
-// // //         .call(zoom.transform, d3.zoomIdentity
-// // //           .translate(width / 2, height / 6)
-// // //           .scale(0.4)
-// // //         );
-// // //     }, 1000);
-
-// // //     return () => {
-// // //       svg.selectAll("*").remove();
-// // //     };
+// // //     // Cleanup
+// // //     return () => svg.selectAll("*").remove();
 // // //   }, [data]);
 
 // // //   return (
 // // //     <svg
 // // //       ref={svgRef}
-// // //       width="95vw"
-// // //       height="90vh"
-// // //       className="bg-gray-50"
+// // //       width="100vw"
+// // //       height="100vh"
+// // //       style={{ background: "#f0f0f0" }}
 // // //     >
 // // //       <style>{`
 // // //         .link {
@@ -914,15 +1107,6 @@ export default Dendrogram;
 // // //           font-size: 12px;
 // // //           font-weight: 500;
 // // //         }
-// // //         .text-group text {
-// // //           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-// // //         }
-// // //         .state-details {
-// // //           pointer-events: all;
-// // //         }
-// // //         .state-details text {
-// // //           user-select: none;
-// // //         }
 // // //       `}</style>
 // // //     </svg>
 // // //   );
@@ -930,420 +1114,919 @@ export default Dendrogram;
 
 // // // export default Dendrogram;
 
-// // // /*
-// // // VISUALIZATION CONFIGURATION:
-// // // --------------------------
-// // // 1. Node Display:
-// // //    - Rounded rectangles with dynamic sizing
-// // //    - Smart text truncation for names > 15 characters
-// // //    - Hover tooltips for full names
-// // //    - Visual indicators for truncated names
-// // //    - Depth-based sizing and colors
+// // // // import React, { useRef, useEffect } from "react";
+// // // // import * as d3 from "d3";
 
-// // // 2. Layout:
-// // //    - Optimized for 5+ levels deep
-// // //    - Handles 2-10 siblings per level
-// // //    - Responsive spacing
-// // //    - Enhanced sibling separation
+// // // // // Visual styling constants
+// // // // const COLORS = {
+// // // //   depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
+// // // //   text: {
+// // // //     primary: "#1a237e",    // Component names
+// // // //     secondary: "#2e7d32",  // Component types
+// // // //     tertiary: "#1565c0"    // State info
+// // // //   },
+// // // //   link: "rgba(85, 85, 85, 0.4)"
+// // // // };
 
-// // // 3. Color Scheme:
-// // //    - Initial pink-to-yellow transition
-// // //    - Depth-based gradient afterwards
-// // //    - High contrast text
-// // //    - Subtle shadows for depth
-// // // */
+// // // // // Node layout configuration
+// // // // const NODE_CONFIG = {
+// // // //   baseWidth: 130,
+// // // //   baseHeight: 70,
+// // // //   cornerRadius: 10,
+// // // //   textTruncateLength: 15,
+// // // // };
 
-// // // import React, { useRef, useEffect } from "react";
-// // // import { createRoot } from "react-dom/client";
-// // // import * as d3 from "d3";
-// // // import AppHeader from './AppHeader';
+// // // // const Dendrogram = ({ data }) => {
+// // // //   const svgRef = useRef();
 
-// // // // Configuration constants
-// // // const COLORS = {
-// // //   initial: "#ff69b4",       // Starting pink
-// // //   transition: "#ffeb3b",    // Transition yellow
-// // //   depths: [                 // Final depth-based colors
-// // //     "#ffb74d",             // Root (Level 0)
-// // //     "#ffa726",             // Level 1
-// // //     "#ff9800",             // Level 2
-// // //     "#fb8c00",             // Level 3
-// // //     "#f57c00",             // Level 4
-// // //     "#ef6c00"              // Level 5+
-// // //   ],
-// // //   text: {
-// // //     primary: "#1a237e",    // Dark blue for filenames
-// // //     secondary: "#2e7d32",  // Dark green for type
-// // //     tertiary: "#1565c0"    // Blue for state
-// // //   },
-// // //   link: "rgba(85, 85, 85, 0.4)", // Semi-transparent connections
-// // //   truncation: "#e91e63"     // Pink indicator for truncated names
-// // // };
+// // // //   useEffect(() => {
+// // // //     if (!svgRef.current) return;
 
-// // // const NODE_CONFIG = {
-// // //   baseWidth: 130,           // Base node width
-// // //   baseHeight: 70,           // Base node height
-// // //   depthScale: 0.9,         // Size reduction per level
-// // //   minScale: 0.6,           // Minimum size (60% of base)
-// // //   cornerRadius: 10,         // Rounded corner radius
-// // //   textTruncateLength: 15,   // Max characters before truncation
-// // //   verticalSpacing: 120,     // Vertical distance between levels
-// // //   horizontalSpacing: 40     // Minimum horizontal distance between siblings
-// // // };
+// // // //     // Set up SVG container
+// // // //     const svg = d3.select(svgRef.current);
+// // // //     const width = window.innerWidth;
+// // // //     const height = window.innerHeight;
 
-// // // function calculateComponentStats(data) {
-// // //   let functionalCount = 0;
-// // //   let classCount = 0;
-// // //   let nullCount = 0;
+// // // //     // Configure tree layout
+// // // //     const tree = d3.tree()
+// // // //       .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
+// // // //       .separation((a, b) => (a.parent === b.parent ? 1.2 : 2.4));
 
-// // //   function traverse(node) {
-// // //     if (node.type === 'FunctionComponent') functionalCount++;
-// // //     else if (node.type === 'ClassComponent') classCount++;
-// // //     else nullCount++;
+// // // //     // Create hierarchy and store initial children state
+// // // //     const root = d3.hierarchy(data);
+// // // //     root.descendants().forEach(d => {
+// // // //       d._children = d.children;
+// // // //     });
 
-// // //     if (node.children) {
-// // //       node.children.forEach(traverse);
-// // //     }
-// // //   }
+// // // //     // Create main group for zooming
+// // // //     const g = svg.append("g");
 
-// // //   traverse(data);
+// // // //     // Set up zoom behavior
+// // // //     const zoom = d3.zoom()
+// // // //       .scaleExtent([0.1, 2])
+// // // //       .on("zoom", (event) => g.attr("transform", event.transform));
+// // // //     svg.call(zoom);
 
-// // //   const totalComponents = Math.max(1, functionalCount + classCount + nullCount);
+// // // //     function update(source) {
+// // // //       // Compute the new tree layout
+// // // //       tree(root);
+// // // //       const nodes = root.descendants();
+// // // //       const links = root.links();
 
-// // //   return {
-// // //     functionalCount,
-// // //     classCount,
-// // //     nullCount,
-// // //     totalComponents
-// // //   };
-// // // }
+// // // //       // Update links
+// // // //       const link = g.selectAll(".link")
+// // // //         .data(links, d => d.target.data.file);
 
-// // // // Window event listener for data
-// // // window.addEventListener("message", (event) => {
-// // //   if (event.data.type === "astData") {
-// // //     const astData = event.data.payload;
-// // //     const stats = calculateComponentStats(astData);
-// // //     const container = document.getElementById("root");
-// // //     const root = createRoot(container);
+// // // //       link.enter()
+// // // //         .append("path")
+// // // //         .attr("class", "link")
+// // // //         .attr("d", d3.linkVertical()
+// // // //           .x(d => d.x)
+// // // //           .y(d => d.y)
+// // // //         );
 
-// // //     root.render(
-// // //       <div className="h-screen w-screen">
-// // //         <AppHeader
-// // //           stats={stats}
-// // //           appName="react-swipeable-views"
-// // //           filePath="/src/App.tsx"
-// // //         />
-// // //         <Dendrogram data={astData} />
-// // //       </div>
-// // //     );
-// // //   }
-// // // });
+// // // //       link.exit().remove();
 
-// // // const Dendrogram = ({ data }) => {
-// // //   const svgRef = useRef();
+// // // //       // Update nodes
+// // // //       const node = g.selectAll(".node")
+// // // //         .data(nodes, d => d.data.file);
 
-// // //   useEffect(() => {
-// // //     if (!svgRef.current) return;
+// // // //       const nodeEnter = node.enter()
+// // // //         .append("g")
+// // // //         .attr("class", "node")
+// // // //         .attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
+// // // //         .on("click", (event, d) => {
+// // // //           if (d.children) {
+// // // //             d._children = d.children;
+// // // //             d.children = null;
+// // // //           } else {
+// // // //             d.children = d._children;
+// // // //             d._children = null;
+// // // //           }
+// // // //           update(d);
+// // // //         });
 
-// // //     const svg = d3.select(svgRef.current);
-// // //     const margin = { top: 80, right: 20, bottom: 20, left: 20 };
-// // //     const width = window.innerWidth - margin.left - margin.right;
-// // //     const height = window.innerHeight - margin.top - margin.bottom;
+// // // //       // Add visual elements to nodes
+// // // //       nodeEnter.each(function(d) {
+// // // //         const depth = Math.min(d.depth, COLORS.depths.length - 1);
+        
+// // // //         // Add rectangle background
+// // // //         d3.select(this)
+// // // //           .append("rect")
+// // // //           .attr("x", -NODE_CONFIG.baseWidth / 2)
+// // // //           .attr("y", -NODE_CONFIG.baseHeight / 2)
+// // // //           .attr("width", NODE_CONFIG.baseWidth)
+// // // //           .attr("height", NODE_CONFIG.baseHeight)
+// // // //           .attr("rx", NODE_CONFIG.cornerRadius)
+// // // //           .style("fill", COLORS.depths[depth]);
 
-// // //     // Tree layout configuration
-// // //     const tree = d3
-// // //       .tree()
-// // //       .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
-// // //       .separation((a, b) => {
-// // //         return a.parent === b.parent ? 1.2 : 2.4;
-// // //       });
+// // // //         // Add text elements
+// // // //         const textGroup = d3.select(this)
+// // // //           .append("g")
+// // // //           .attr("class", "text-group");
 
-// // //     const root = d3.hierarchy(data);
-// // //     root.descendants().forEach((d) => (d._children = d.children));
+// // // //         // Component name
+// // // //         const fileName = d.data.file || "Unnamed";
+// // // //         const truncatedName = fileName.length > NODE_CONFIG.textTruncateLength
+// // // //           ? `${fileName.slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
+// // // //           : fileName;
 
-// // //     // Zoom behavior
-// // //     const zoom = d3.zoom()
-// // //       .scaleExtent([0.1, 2])
-// // //       .on("zoom", (event) => {
-// // //         g.attr("transform", event.transform);
-// // //       });
+// // // //         textGroup.append("text")
+// // // //           .attr("y", -NODE_CONFIG.baseHeight / 4)
+// // // //           .attr("text-anchor", "middle")
+// // // //           .style("fill", COLORS.text.primary)
+// // // //           .text(truncatedName);
 
-// // //     svg.call(zoom);
+// // // //         // Add tooltip for truncated names
+// // // //         if (truncatedName !== fileName) {
+// // // //           textGroup.append("title").text(fileName);
+// // // //         }
 
-// // //     const g = svg.append("g");
+// // // //         // Component type
+// // // //         textGroup.append("text")
+// // // //           .attr("y", 0)
+// // // //           .attr("text-anchor", "middle")
+// // // //           .style("fill", COLORS.text.secondary)
+// // // //           .text(d.data.type || "Unknown");
 
-// // //     // Helper functions
-// // //     const getNodeSize = (depth) => {
-// // //       const scale = Math.max(
-// // //         NODE_CONFIG.minScale,
-// // //         Math.pow(NODE_CONFIG.depthScale, depth)
-// // //       );
-// // //       return {
-// // //         width: NODE_CONFIG.baseWidth * scale,
-// // //         height: NODE_CONFIG.baseHeight * scale
-// // //       };
-// // //     };
+// // // //         // State count
+// // // //         textGroup.append("text")
+// // // //           .attr("y", NODE_CONFIG.baseHeight / 4)
+// // // //           .attr("text-anchor", "middle")
+// // // //           .style("fill", COLORS.text.tertiary)
+// // // //           .text(`State: ${d.data.state ? d.data.state.length : 0}`);
+// // // //       });
 
-// // //     const formatNodeName = (name) => {
-// // //       if (name.length <= NODE_CONFIG.textTruncateLength) {
-// // //         return { display: name, truncated: false };
-// // //       }
-// // //       return {
-// // //         display: `${name.slice(0, NODE_CONFIG.textTruncateLength - 3)}...`,
-// // //         truncated: true
-// // //       };
-// // //     };
+// // // //       // Update node positions with transition
+// // // //       const nodeUpdate = nodeEnter.merge(node);
+// // // //       nodeUpdate.transition()
+// // // //         .duration(750)
+// // // //         .attr("transform", d => `translate(${d.x},${d.y})`);
 
-// // //     function update(source) {
-// // //       tree(root);
-// // //       const nodes = root.descendants();
-// // //       const links = root.links();
+// // // //       // Store node positions for transitions
+// // // //       nodes.forEach(d => {
+// // // //         d.x0 = d.x;
+// // // //         d.y0 = d.y;
+// // // //       });
 
-// // //       // Update links
-// // //       const link = g
-// // //         .selectAll(".link")
-// // //         .data(links, d => d.target.data.file);
+// // // //       node.exit().remove();
+// // // //     }
 
-// // //       const linkEnter = link
-// // //         .enter()
-// // //         .append("path")
-// // //         .attr("class", "link")
-// // //         .attr("d", d3.linkVertical()
-// // //           .x(d => d.x)
-// // //           .y(d => d.y)
-// // //         );
+// // // //     // Initial render
+// // // //     update(root);
 
-// // //       link.merge(linkEnter)
-// // //         .transition()
-// // //         .duration(750)
-// // //         .attr("d", d3.linkVertical()
-// // //           .x(d => d.x)
-// // //           .y(d => d.y)
-// // //         );
+// // // //     // Set initial view position
+// // // //     const initialTransform = d3.zoomIdentity
+// // // //       .translate(width / 2, height / 4)
+// // // //       .scale(0.8);
+// // // //     svg.call(zoom.transform, initialTransform);
 
-// // //       link.exit()
-// // //         .transition()
-// // //         .duration(750)
-// // //         .remove();
+// // // //     return () => {
+// // // //       svg.selectAll("*").remove();
+// // // //     };
+// // // //   }, [data]);
 
-// // //       // Update nodes
-// // //       const node = g
-// // //         .selectAll(".node")
-// // //         .data(nodes, d => d.data.file);
+// // // //   return (
+// // // //     <svg
+// // // //       ref={svgRef}
+// // // //       width="100vw"
+// // // //       height="100vh"
+// // // //       style={{ background: "#f0f0f0" }}
+// // // //     >
+// // // //       <style>{`
+// // // //         .link {
+// // // //           fill: none;
+// // // //           stroke: ${COLORS.link};
+// // // //           stroke-width: 1.5px;
+// // // //         }
+// // // //         .node text {
+// // // //           font-size: 12px;
+// // // //           font-weight: 500;
+// // // //         }
+// // // //       `}</style>
+// // // //     </svg>
+// // // //   );
+// // // // };
 
-// // //       const nodeEnter = node
-// // //         .enter()
-// // //         .append("g")
-// // //         .attr("class", "node")
-// // //         .attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
-// // //         .on("click", (event, d) => {
-// // //           d.children = d.children ? null : d._children;
-// // //           update(d);
-// // //         });
+// // // // export default Dendrogram;
 
-// // //       // Add node rectangles
-// // //       nodeEnter.each(function(d) {
-// // //         const nodeSize = getNodeSize(d.depth);
-// // //         const depth = Math.min(d.depth, COLORS.depths.length - 1);
+// // // // // /*
+// // // // // DENDROGRAM VISUALIZATION COMPONENT
+// // // // // ================================
+// // // // // Features:
+// // // // // - Interactive node collapsing/expanding
+// // // // // - Dark mode toggle
+// // // // // - Zoom and pan functionality
+// // // // // - Automatic color depth changes
+// // // // // - File name truncation with tooltips
+// // // // // */
 
-// // //         // Background rectangle
-// // //         d3.select(this)
-// // //           .append("rect")
-// // //           .attr("x", -nodeSize.width / 2)
-// // //           .attr("y", -nodeSize.height / 2)
-// // //           .attr("width", nodeSize.width)
-// // //           .attr("height", nodeSize.height)
-// // //           .attr("rx", NODE_CONFIG.cornerRadius)
-// // //           .attr("ry", NODE_CONFIG.cornerRadius)
-// // //           .style("fill", COLORS.initial)
-// // //           .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.2))");
+// // // // // import React, { useRef, useEffect, useState } from "react";
+// // // // // import * as d3 from "d3";
 
-// // //         // Format node name
-// // //         const { display, truncated } = formatNodeName(d.data.file);
+// // // // // // Visual styling constants
+// // // // // const COLORS = {
+// // // // //   initial: "#ff69b4",  // Initial pink color
+// // // // //   // Color gradient for different tree depths
+// // // // //   depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
+// // // // //   text: {
+// // // // //     primary: "#1a237e",    // Component names
+// // // // //     secondary: "#2e7d32",  // Type indicators
+// // // // //     tertiary: "#1565c0"    // State information
+// // // // //   },
+// // // // //   link: "rgba(85, 85, 85, 0.4)",  // Connection lines
+// // // // //   truncation: "#e91e63"    // Truncation indicators
+// // // // // };
 
-// // //         // Main text group
-// // //         const textGroup = d3.select(this)
-// // //           .append("g")
-// // //           .attr("class", "text-group");
+// // // // // // Node layout configuration
+// // // // // const NODE_CONFIG = {
+// // // // //   baseWidth: 130,         // Width of each node
+// // // // //   baseHeight: 70,         // Height of each node
+// // // // //   depthScale: 0.9,        // Size reduction per level
+// // // // //   minScale: 0.6,          // Minimum node size
+// // // // //   cornerRadius: 10,       // Node corner rounding
+// // // // //   textTruncateLength: 15, // Max text length before truncation
+// // // // //   verticalSpacing: 120,   // Space between levels
+// // // // //   horizontalSpacing: 40   // Space between siblings
+// // // // // };
 
-// // //         // Filename
-// // //         textGroup
-// // //           .append("text")
-// // //           .attr("y", -nodeSize.height / 4)
-// // //           .attr("text-anchor", "middle")
-// // //           .style("fill", COLORS.text.primary)
-// // //           .text(display);
+// // // // // const Dendrogram = ({ data, appName }) => {
+// // // // //   const svgRef = useRef();
+// // // // //   const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
 
-// // //         // Truncation indicator
-// // //         if (truncated) {
-// // //           textGroup
-// // //             .append("circle")
-// // //             .attr("cx", nodeSize.width / 2 - 8)
-// // //             .attr("cy", -nodeSize.height / 4)
-// // //             .attr("r", 3)
-// // //             .style("fill", COLORS.truncation);
-// // //         }
+// // // // //   useEffect(() => {
+// // // // //     if (!svgRef.current) return;
 
-// // //         // Type
-// // //         textGroup
-// // //           .append("text")
-// // //           .attr("y", 0)
-// // //           .attr("text-anchor", "middle")
-// // //           .style("fill", COLORS.text.secondary)
-// // //           .text(d.data.type);
+// // // // //     // Initialize D3 visualization
+// // // // //     const svg = d3.select(svgRef.current);
+// // // // //     const width = window.innerWidth;
+// // // // //     const height = window.innerHeight;
 
-// // //         // State count
-// // //         textGroup
-// // //           .append("text")
-// // //           .attr("y", nodeSize.height / 4)
-// // //           .attr("text-anchor", "middle")
-// // //           .style("fill", COLORS.text.tertiary)
-// // //           .style("cursor", "pointer")
-// // //           .text(`State: ${d.data.state.length}`)
-// // //           .on("click", function(event) {
-// // //             event.stopPropagation();
-// // //             showStateDetails(d, this);
-// // //           });
+// // // // //     // Configure tree layout
+// // // // //     const tree = d3.tree()
+// // // // //       .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
+// // // // //       .separation((a, b) => (a.parent === b.parent ? 1.2 : 2.4));
 
-// // //         // Tooltip for full name if truncated
-// // //         if (truncated) {
-// // //           textGroup
-// // //             .append("title")
-// // //             .text(d.data.file);
-// // //         }
-// // //       });
+// // // // //     // Create hierarchy and container
+// // // // //     const root = d3.hierarchy(data);
+// // // // //     const g = svg.append("g"); // Group for zooming
 
-// // //       function showStateDetails(d, element) {
-// // //         // Remove any existing state details
-// // //         g.selectAll(".state-details").remove();
+// // // // //     // Set up zoom behavior
+// // // // //     const zoom = d3.zoom()
+// // // // //       .scaleExtent([0.1, 2])
+// // // // //       .on("zoom", (event) => g.attr("transform", event.transform));
+// // // // //     svg.call(zoom);
 
-// // //         const stateDetails = g
-// // //           .append("g")
-// // //           .attr("class", "state-details")
-// // //           .attr("transform", `translate(${d.x + 100},${d.y - 30})`);
+// // // // //     // Update function - handles rendering and transitions
+// // // // //     function update(source) {
+// // // // //       tree(root);
+// // // // //       const nodes = root.descendants();
+// // // // //       const links = root.links();
 
-// // //         stateDetails
-// // //           .append("rect")
-// // //           .attr("x", -170)
-// // //           .attr("y", 80)
-// // //           .attr("width", 150)
-// // //           .attr("height", d.data.state.length * 20 + 20)
-// // //           .attr("rx", 5)
-// // //           .attr("ry", 5)
-// // //           .style("fill", "#fff")
-// // //           .style("stroke", COLORS.text.tertiary)
-// // //           .style("stroke-width", "1px")
-// // //           .style("filter", "drop-shadow(0px 2px 3px rgba(0,0,0,0.1))");
+// // // // //       // Update links
+// // // // //       const link = g.selectAll(".link")
+// // // // //         .data(links, d => d.target.data.file);
 
-// // //         // Close button
-// // //         stateDetails
-// // //           .append("text")
-// // //           .attr("x", -35)
-// // //           .attr("y", 95)
-// // //           .text("×")
-// // //           .style("fill", COLORS.text.tertiary)
-// // //           .style("cursor", "pointer")
-// // //           .style("font-size", "16px")
-// // //           .on("click", () => stateDetails.remove());
+// // // // //       link.enter()
+// // // // //         .append("path")
+// // // // //         .attr("class", "link")
+// // // // //         .attr("d", d3.linkVertical()
+// // // // //           .x(d => d.x)
+// // // // //           .y(d => d.y)
+// // // // //         )
+// // // // //         .style("stroke", COLORS.link)
+// // // // //         .style("fill", "none")
+// // // // //         .style("stroke-width", 1.5);
 
-// // //         // State items
-// // //         d.data.state.forEach((item, i) => {
-// // //           stateDetails
-// // //             .append("text")
-// // //             .attr("x", -160)
-// // //             .attr("y", i * 20 + 100)
-// // //             .text(item)
-// // //             .style("fill", COLORS.text.primary)
-// // //             .style("font-size", "12px");
-// // //         });
-// // //       }
+// // // // //       link.exit().remove();
 
-// // //       // Handle node updates
-// // //       const nodeUpdate = nodeEnter.merge(node);
+// // // // //       // Update nodes
+// // // // //       const node = g.selectAll(".node")
+// // // // //         .data(nodes, d => d.data.file);
 
-// // //       nodeUpdate
-// // //         .transition()
-// // //         .duration(750)
-// // //         .attr("transform", d => `translate(${d.x},${d.y})`);
+// // // // //       const nodeEnter = node.enter()
+// // // // //         .append("g")
+// // // // //         .attr("class", "node")
+// // // // //         .attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
+// // // // //         .on("click", (event, d) => {
+// // // // //           d.children = d.children ? null : d._children;
+// // // // //           update(d);
+// // // // //         });
 
-// // //       // Store node positions for transitions
-// // //       nodes.forEach(d => {
-// // //         d.x0 = d.x;
-// // //         d.y0 = d.y;
-// // //       });
+// // // // //       // Add visual elements to nodes
+// // // // //       nodeEnter.each(function(d) {
+// // // // //         const depth = Math.min(d.depth, COLORS.depths.length - 1);
+// // // // //         d3.select(this).append("rect")
+// // // // //           .attr("x", -NODE_CONFIG.baseWidth / 2)
+// // // // //           .attr("y", -NODE_CONFIG.baseHeight / 2)
+// // // // //           .attr("width", NODE_CONFIG.baseWidth)
+// // // // //           .attr("height", NODE_CONFIG.baseHeight)
+// // // // //           .attr("rx", NODE_CONFIG.cornerRadius)
+// // // // //           .style("fill", COLORS.depths[depth]);
 
-// // //       // Handle removed nodes
-// // //       node.exit()
-// // //         .transition()
-// // //         .duration(750)
-// // //         .attr("transform", d => `translate(${source.x},${source.y})`)
-// // //         .remove();
+// // // // //         const textGroup = d3.select(this).append("g").attr("class", "text-group");
+// // // // //         const fileName = d.data.file || "Unnamed";
+// // // // //         const truncatedName = fileName.length > NODE_CONFIG.textTruncateLength
+// // // // //           ? `${fileName.slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
+// // // // //           : fileName;
 
-// // //       // Color transition
-// // //       setTimeout(() => {
-// // //         g.selectAll("rect")
-// // //           .transition()
-// // //           .duration(2000)
-// // //           .style("fill", d => COLORS.depths[Math.min(d.depth, COLORS.depths.length - 1)]);
-// // //       }, 1000);
+// // // // //         // Add filename
+// // // // //         textGroup.append("text")
+// // // // //           .attr("y", -NODE_CONFIG.baseHeight / 4)
+// // // // //           .attr("text-anchor", "middle")
+// // // // //           .style("fill", COLORS.text.primary)
+// // // // //           .text(truncatedName);
 
-// // //       return nodes;
-// // //     }
+// // // // //         // Add tooltip for truncated names
+// // // // //         if (truncatedName !== fileName) {
+// // // // //           textGroup.append("title").text(fileName);
+// // // // //         }
 
-// // // // Initial render
-// // // const nodes = update(root);
+// // // // //         // Add component type
+// // // // //         textGroup.append("text")
+// // // // //           .attr("y", 0)
+// // // // //           .attr("text-anchor", "middle")
+// // // // //           .style("fill", COLORS.text.secondary)
+// // // // //           .text(d.data.type || "Unknown");
 
-// // // // Initial view positioning
-// // // const initialTransform = d3.zoomIdentity
-// // //   .translate(width / 2, height / 4)
-// // //   .scale(0.8);
+// // // // //         // Add state count
+// // // // //         textGroup.append("text")
+// // // // //           .attr("y", NODE_CONFIG.baseHeight / 4)
+// // // // //           .attr("text-anchor", "middle")
+// // // // //           .style("fill", COLORS.text.tertiary)
+// // // // //           .text(`State: ${d.data.state ? d.data.state.length : 0}`);
+// // // // //       });
 
-// // // svg.call(zoom.transform, initialTransform);
+// // // // //       // Handle transitions
+// // // // //       const nodeUpdate = nodeEnter.merge(node);
+// // // // //       nodeUpdate.transition()
+// // // // //         .duration(750)
+// // // // //         .attr("transform", d => `translate(${d.x},${d.y})`);
 
-// // // // Zoom out animation after initial render
-// // // setTimeout(() => {
-// // //   svg.transition()
-// // //     .duration(2000)
-// // //     .call(zoom.transform, d3.zoomIdentity
-// // //       .translate(width / 2, height / 6)
-// // //       .scale(0.4)
-// // //     );
-// // // }, 1000);
+// // // // //       // Store positions for transitions
+// // // // //       nodes.forEach(d => {
+// // // // //         d.x0 = d.x;
+// // // // //         d.y0 = d.y;
+// // // // //       });
 
-// // // // Cleanup on unmount
-// // // return () => {
-// // //   svg.selectAll("*").remove();
-// // // };
-// // // }, [data]);
+// // // // //       node.exit().remove();
+// // // // //     }
 
-// // // return (
-// // // <svg
-// // //   ref={svgRef}
-// // //   width="95vw"
-// // //   height="90vh"
-// // //   className="bg-gray-50"
-// // // >
-// // //   <style>{`
-// // //     .link {
-// // //       fill: none;
-// // //       stroke: ${COLORS.link};
-// // //       stroke-width: 1.5px;
-// // //     }
-// // //     .node text {
-// // //       font-size: 12px;
-// // //       font-weight: 500;
-// // //     }
-// // //     .text-group text {
-// // //       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-// // //     }
-// // //     .state-details {
-// // //       pointer-events: all;
-// // //     }
-// // //     .state-details text {
-// // //       user-select: none;
-// // //     }
-// // //   `}</style>
-// // // </svg>
-// // // );
-// // // };
+// // // // //     // Initial render
+// // // // //     update(root);
 
-// // // export default Dendrogram;
+// // // // //     // Set initial view position
+// // // // //     const initialTransform = d3.zoomIdentity
+// // // // //       .translate(width / 2, height / 4)
+// // // // //       .scale(0.8);
+// // // // //     svg.call(zoom.transform, initialTransform);
+
+// // // // //     // Cleanup on unmount
+// // // // //     return () => svg.selectAll("*").remove();
+// // // // //   }, [data]);
+
+// // // // //   // Calculate theme-based styles
+// // // // //   const backgroundColor = isDarkMode ? "#1a1a1a" : "#ffffff";
+// // // // //   const textColor = isDarkMode ? "#ffffff" : "#333333";
+
+// // // // //   // Render component
+// // // // //   return (
+// // // // //     <div style={{ position: "relative" }}>
+// // // // //       {/* Dark Mode Toggle */}
+// // // // //       <button
+// // // // //         onClick={() => setIsDarkMode(prev => !prev)}
+// // // // //         style={{
+// // // // //           position: "absolute",
+// // // // //           top: 20,
+// // // // //           right: 20,
+// // // // //           padding: "10px 20px",
+// // // // //           backgroundColor: isDarkMode ? "#333" : "#ddd",
+// // // // //           color: isDarkMode ? "#eee" : "#111",
+// // // // //           border: "none",
+// // // // //           borderRadius: "5px",
+// // // // //           cursor: "pointer"
+// // // // //         }}
+// // // // //       >
+// // // // //         Toggle Dark Mode
+// // // // //       </button>
+
+// // // // //       {/* Title Display */}
+// // // // //       <h1
+// // // // //         style={{
+// // // // //           position: "absolute",
+// // // // //           top: 20,
+// // // // //           left: 20,
+// // // // //           color: textColor,
+// // // // //           fontSize: "24px",
+// // // // //           fontFamily: "Arial, sans-serif"
+// // // // //         }}
+// // // // //       >
+// // // // //         {appName || "React Component Tree"}
+// // // // //       </h1>
+
+// // // // //       {/* Main SVG Container */}
+// // // // //       <svg 
+// // // // //         ref={svgRef} 
+// // // // //         width="100vw" 
+// // // // //         height="100vh"
+// // // // //         style={{ backgroundColor }}
+// // // // //       >
+// // // // //         <style>{`
+// // // // //           .link { stroke: ${COLORS.link}; stroke-width: 1.5px; }
+// // // // //           .node text { font-size: 12px; font-weight: 500; fill: ${textColor}; }
+// // // // //         `}</style>
+// // // // //       </svg>
+// // // // //     </div>
+// // // // //   );
+// // // // // };
+
+// // // // // export default Dendrogram;
+
+// // // // // // /*
+// // // // // // DENDROGRAM COMPONENT
+// // // // // // ===================
+// // // // // // PURPOSE: Provides interactive visualization of React component hierarchy.
+// // // // // // Features: Collapsible nodes, zoom/pan, dynamic sizing, node status information.
+
+// // // // // // TREE INTERACTION:
+// // // // // // ---------------
+// // // // // // - Click: Expand/collapse nodes
+// // // // // // - Drag: Pan visualization
+// // // // // // - Scroll/Pinch: Zoom in/out
+// // // // // // */
+
+// // // // // // import React, { useRef, useEffect } from "react";
+// // // // // // import * as d3 from "d3";
+
+// // // // // // // Visual styling configuration
+// // // // // // const COLORS = {
+// // // // // //   initial: "#ff69b4",
+// // // // // //   depths: ["#ffb74d", "#ffa726", "#ff9800", "#fb8c00", "#f57c00", "#ef6c00"],
+// // // // // //   text: {
+// // // // // //     primary: "#1a237e",    // File names
+// // // // // //     secondary: "#2e7d32",  // Component types
+// // // // // //     tertiary: "#1565c0"    // State counts
+// // // // // //   },
+// // // // // //   link: "rgba(85, 85, 85, 0.4)",
+// // // // // //   truncation: "#e91e63"
+// // // // // // };
+
+// // // // // // // Node layout settings
+// // // // // // const NODE_CONFIG = {
+// // // // // //   baseWidth: 130,
+// // // // // //   baseHeight: 70,
+// // // // // //   depthScale: 0.9,
+// // // // // //   minScale: 0.6,
+// // // // // //   cornerRadius: 10,
+// // // // // //   textTruncateLength: 15,
+// // // // // //   verticalSpacing: 120,
+// // // // // //   horizontalSpacing: 40
+// // // // // // };
+
+// // // // // // const Dendrogram = ({ data }) => {
+// // // // // //   const svgRef = useRef();
+
+// // // // // //   useEffect(() => {
+// // // // // //     if (!svgRef.current) return;
+
+// // // // // //     // Set up SVG container
+// // // // // //     const svg = d3.select(svgRef.current);
+// // // // // //     const width = window.innerWidth;
+// // // // // //     const height = window.innerHeight;
+
+// // // // // //     // Configure tree layout
+// // // // // //     const tree = d3.tree()
+// // // // // //       .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
+// // // // // //       .separation((a, b) => (a.parent === b.parent ? 1.2 : 2.4));
+
+// // // // // //     // Create hierarchy and store initial children state
+// // // // // //     const root = d3.hierarchy(data);
+// // // // // //     root.descendants().forEach(d => {
+// // // // // //       d._children = d.children;
+// // // // // //     });
+
+// // // // // //     // Set up zoom behavior
+// // // // // //     const g = svg.append("g");
+// // // // // //     const zoom = d3.zoom()
+// // // // // //       .scaleExtent([0.1, 2])
+// // // // // //       .on("zoom", (event) => g.attr("transform", event.transform));
+// // // // // //     svg.call(zoom);
+
+// // // // // //     // Update function for rendering tree
+// // // // // //     function update(source) {
+// // // // // //       tree(root);
+// // // // // //       const nodes = root.descendants();
+// // // // // //       const links = root.links();
+
+// // // // // //       // Update links
+// // // // // //       const link = g.selectAll(".link")
+// // // // // //         .data(links, d => d.target.data.file);
+
+// // // // // //       const linkEnter = link.enter()
+// // // // // //         .append("path")
+// // // // // //         .attr("class", "link")
+// // // // // //         .attr("d", d3.linkVertical()
+// // // // // //           .x(d => d.x)
+// // // // // //           .y(d => d.y)
+// // // // // //         );
+
+// // // // // //       link.merge(linkEnter)
+// // // // // //         .transition()
+// // // // // //         .duration(750)
+// // // // // //         .attr("d", d3.linkVertical()
+// // // // // //           .x(d => d.x)
+// // // // // //           .y(d => d.y)
+// // // // // //         );
+
+// // // // // //       link.exit()
+// // // // // //         .transition()
+// // // // // //         .duration(750)
+// // // // // //         .remove();
+
+// // // // // //       // Update nodes
+// // // // // //       const node = g.selectAll(".node")
+// // // // // //         .data(nodes, d => d.data.file);
+
+// // // // // //       const nodeEnter = node.enter()
+// // // // // //         .append("g")
+// // // // // //         .attr("class", "node")
+// // // // // //         .attr("transform", d => `translate(${source.x0 || source.x},${source.y0 || source.y})`)
+// // // // // //         .on("click", (event, d) => {
+// // // // // //           if (d.children) {
+// // // // // //             d._children = d.children;
+// // // // // //             d.children = null;
+// // // // // //           } else {
+// // // // // //             d.children = d._children;
+// // // // // //             d._children = null;
+// // // // // //           }
+// // // // // //           update(d);
+// // // // // //         });
+
+// // // // // //       // Add node visuals
+// // // // // //       nodeEnter.each(function(d) {
+// // // // // //         const depth = Math.min(d.depth, COLORS.depths.length - 1);
+        
+// // // // // //         // Add rectangle background
+// // // // // //         d3.select(this)
+// // // // // //           .append("rect")
+// // // // // //           .attr("x", -NODE_CONFIG.baseWidth / 2)
+// // // // // //           .attr("y", -NODE_CONFIG.baseHeight / 2)
+// // // // // //           .attr("width", NODE_CONFIG.baseWidth)
+// // // // // //           .attr("height", NODE_CONFIG.baseHeight)
+// // // // // //           .attr("rx", NODE_CONFIG.cornerRadius)
+// // // // // //           .style("fill", COLORS.depths[depth]);
+
+// // // // // //         // Add text elements
+// // // // // //         const textGroup = d3.select(this)
+// // // // // //           .append("g")
+// // // // // //           .attr("class", "text-group");
+
+// // // // // //         // Handle filename display
+// // // // // //         const fileName = d.data.file || "Unnamed";
+// // // // // //         const truncatedName = fileName.length > NODE_CONFIG.textTruncateLength
+// // // // // //           ? `${fileName.slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
+// // // // // //           : fileName;
+
+// // // // // //         textGroup.append("text")
+// // // // // //           .attr("y", -NODE_CONFIG.baseHeight / 4)
+// // // // // //           .attr("text-anchor", "middle")
+// // // // // //           .style("fill", COLORS.text.primary)
+// // // // // //           .text(truncatedName);
+
+// // // // // //         if (truncatedName !== fileName) {
+// // // // // //           textGroup.append("title").text(fileName);
+// // // // // //         }
+
+// // // // // //         // Component type
+// // // // // //         textGroup.append("text")
+// // // // // //           .attr("y", 0)
+// // // // // //           .attr("text-anchor", "middle")
+// // // // // //           .style("fill", COLORS.text.secondary)
+// // // // // //           .text(d.data.type || "Unknown");
+
+// // // // // //         // State count
+// // // // // //         textGroup.append("text")
+// // // // // //           .attr("y", NODE_CONFIG.baseHeight / 4)
+// // // // // //           .attr("text-anchor", "middle")
+// // // // // //           .style("fill", COLORS.text.tertiary)
+// // // // // //           .text(`State: ${d.data.state ? d.data.state.length : 0}`);
+// // // // // //       });
+
+// // // // // //       // Update node positions
+// // // // // //       const nodeUpdate = nodeEnter.merge(node);
+// // // // // //       nodeUpdate
+// // // // // //         .transition()
+// // // // // //         .duration(750)
+// // // // // //         .attr("transform", d => `translate(${d.x},${d.y})`);
+
+// // // // // //       // Store positions for transitions
+// // // // // //       nodes.forEach(d => {
+// // // // // //         d.x0 = d.x;
+// // // // // //         d.y0 = d.y;
+// // // // // //       });
+
+// // // // // //       // Remove old nodes
+// // // // // //       node.exit()
+// // // // // //         .transition()
+// // // // // //         .duration(750)
+// // // // // //         .remove();
+// // // // // //     }
+
+// // // // // //     // Initial render
+// // // // // //     update(root);
+
+// // // // // //     // Set initial view position
+// // // // // //     const initialTransform = d3.zoomIdentity
+// // // // // //       .translate(width / 2, height / 4)
+// // // // // //       .scale(0.8);
+// // // // // //     svg.call(zoom.transform, initialTransform);
+
+// // // // // //     // Clean up
+// // // // // //     return () => {
+// // // // // //       svg.selectAll("*").remove();
+// // // // // //     };
+// // // // // //   }, [data]);
+
+// // // // // //   return (
+// // // // // //     <svg
+// // // // // //       ref={svgRef}
+// // // // // //       width="100vw"
+// // // // // //       height="100vh"
+// // // // // //       style={{ background: "#f0f0f0" }}
+// // // // // //     >
+// // // // // //       <style>{`
+// // // // // //         .link {
+// // // // // //           fill: none;
+// // // // // //           stroke: ${COLORS.link};
+// // // // // //           stroke-width: 1.5px;
+// // // // // //         }
+// // // // // //         .node text {
+// // // // // //           font-size: 12px;
+// // // // // //           font-weight: 500;
+// // // // // //         }
+// // // // // //         .text-group text {
+// // // // // //           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+// // // // // //         }
+// // // // // //       `}</style>
+// // // // // //     </svg>
+// // // // // //   );
+// // // // // // };
+
+// // // // // // export default Dendrogram;
+
+// // // // // // // /*
+// // // // // // // VISUALIZATION CONFIGURATION:
+// // // // // // // --------------------------
+// // // // // // // 1. Node Display:
+// // // // // // //    - Rounded rectangles with dynamic sizing based on depth
+// // // // // // //    - Smart text truncation for names > 15 characters
+// // // // // // //    - Hover tooltips for full names
+// // // // // // //    - Visual indicators for truncated names
+// // // // // // //    - Depth-based colors for distinguishing levels
+
+// // // // // // // 2. Layout:
+// // // // // // //    - Designed for trees up to 5+ levels deep
+// // // // // // //    - Handles 2-10 siblings per level smoothly
+// // // // // // //    - Dynamic spacing for visually clear separation
+
+// // // // // // // 3. Color Scheme:
+// // // // // // //    - Transition from pink to orange with increasing depth
+// // // // // // //    - High contrast text
+// // // // // // //    - Light shadows to enhance depth perception
+
+// // // // // // // 4. Interactive Features:
+// // // // // // //    - Dark/Light mode toggle
+// // // // // // //    - Zoom and pan navigation
+// // // // // // //    - Collapsible node trees
+// // // // // // //    - Smooth transitions
+
+// // // // // // // 5. Performance:
+// // // // // // //    - Optimized for trees with 50+ nodes
+// // // // // // //    - Efficient re-rendering
+// // // // // // //    - Memory cleanup on unmount
+// // // // // // // */
+
+// // // // // // // import React, { useRef, useEffect, useState } from "react";
+// // // // // // // import * as d3 from "d3";
+
+// // // // // // // // **STYLE CONFIGURATION:** Set color and sizing for node and link visuals
+// // // // // // // const COLORS = {
+// // // // // // //   initial: "#ff69b4",    // Start with pink, transitioning to orange for deeper nodes
+// // // // // // //   depths: [
+// // // // // // //     "#ffb74d",          // Root level (warmest)
+// // // // // // //     "#ffa726",          // Level 1
+// // // // // // //     "#ff9800",          // Level 2
+// // // // // // //     "#fb8c00",          // Level 3
+// // // // // // //     "#f57c00",          // Level 4
+// // // // // // //     "#ef6c00"           // Deepest level (coolest)
+// // // // // // //   ],
+// // // // // // //   text: {
+// // // // // // //     primary: "#1a237e",   // Filename color (dark blue for contrast)
+// // // // // // //     secondary: "#2e7d32", // Component type color (green for distinction)
+// // // // // // //     tertiary: "#1565c0"   // State info color (blue for information)
+// // // // // // //   },
+// // // // // // //   link: "rgba(85, 85, 85, 0.4)", // Semi-transparent connections for visual hierarchy
+// // // // // // //   truncation: "#e91e63"          // Pink indicator for truncated text
+// // // // // // // };
+
+// // // // // // // // **NODE LAYOUT CONFIGURATION:** Customize dimensions and spacing for nodes
+// // // // // // // const NODE_CONFIG = {
+// // // // // // //   baseWidth: 130,              // Standard node width
+// // // // // // //   baseHeight: 70,              // Standard node height
+// // // // // // //   depthScale: 0.9,            // Nodes shrink 10% per level
+// // // // // // //   minScale: 0.6,              // Prevents nodes from becoming too small
+// // // // // // //   cornerRadius: 10,           // Rounded corners for softer appearance
+// // // // // // //   textTruncateLength: 15,     // Max characters before truncation
+// // // // // // //   verticalSpacing: 120,       // Vertical distance between levels
+// // // // // // //   horizontalSpacing: 40       // Horizontal distance between siblings
+// // // // // // // };
+
+// // // // // // // // **THEME CONFIGURATION:** Dark mode color adjustments
+// // // // // // // const THEME = {
+// // // // // // //   light: {
+// // // // // // //     background: "#ffffff",
+// // // // // // //     text: "#333333",
+// // // // // // //     button: "#dddddd",
+// // // // // // //     buttonText: "#111111"
+// // // // // // //   },
+// // // // // // //   dark: {
+// // // // // // //     background: "#1a1a1a",
+// // // // // // //     text: "#ffffff",
+// // // // // // //     button: "#333333",
+// // // // // // //     buttonText: "#eeeeee"
+// // // // // // //   }
+// // // // // // // };
+
+// // // // // // // // **DENDROGRAM COMPONENT:** Main visualization component
+// // // // // // // const Dendrogram = ({ data, appName }) => {
+// // // // // // //   const svgRef = useRef();                              // References SVG container
+// // // // // // //   const [isDarkMode, setIsDarkMode] = useState(false);  // Controls theme / Dark mode state
+
+// // // // // // //   useEffect(() => {
+// // // // // // //     if (!svgRef.current) return;
+
+// // // // // // //     const svg = d3.select(svgRef.current);
+// // // // // // //     const width = window.innerWidth;
+// // // // // // //     const height = window.innerHeight;
+
+// // // // // // //     const tree = d3.tree()
+// // // // // // //       .nodeSize([NODE_CONFIG.baseHeight * 1.5, NODE_CONFIG.baseWidth * 2])
+// // // // // // //       .separation((a, b) => (a.parent === b.parent ? 1.2 : 2.4));
+
+// // // // // // //     const root = d3.hierarchy(data);
+// // // // // // //     const g = svg.append("g"); // Group element to allow for zooming
+
+// // // // // // //     const zoom = d3.zoom()
+// // // // // // //       .scaleExtent([0.1, 2])
+// // // // // // //       .on("zoom", (event) => g.attr("transform", event.transform));
+// // // // // // //     svg.call(zoom);
+
+// // // // // // //     function update(source) {
+// // // // // // //       tree(root);
+// // // // // // //       const nodes = root.descendants();
+// // // // // // //       const links = root.links();
+
+// // // // // // //       const link = g.selectAll(".link")
+// // // // // // //         .data(links, d => d.target.data.file);
+
+// // // // // // //       link.enter()
+// // // // // // //         .append("path")
+// // // // // // //         .attr("class", "link")
+// // // // // // //         .attr("d", d3.linkVertical()
+// // // // // // //           .x(d => d.x)
+// // // // // // //           .y(d => d.y)
+// // // // // // //         )
+// // // // // // //         .style("stroke", COLORS.link)
+// // // // // // //         .style("fill", "none")
+// // // // // // //         .style("stroke-width", 1.5);
+
+// // // // // // //       link.exit().remove();
+
+// // // // // // //       const node = g.selectAll(".node")
+// // // // // // //         .data(nodes, d => d.data.file);
+
+// // // // // // //       const nodeEnter = node.enter()
+// // // // // // //         .append("g")
+// // // // // // //         .attr("class", "node")
+// // // // // // //         .attr("transform", d => `translate(${source.x0 || d.x},${source.y0 || d.y})`)
+// // // // // // //         .on("click", (event, d) => {
+// // // // // // //           d.children = d.children ? null : d._children;
+// // // // // // //           update(d);
+// // // // // // //         });
+
+// // // // // // //       nodeEnter.each(function(d) {
+// // // // // // //         const depth = Math.min(d.depth, COLORS.depths.length - 1);
+// // // // // // //         d3.select(this).append("rect")
+// // // // // // //           .attr("x", -NODE_CONFIG.baseWidth / 2)
+// // // // // // //           .attr("y", -NODE_CONFIG.baseHeight / 2)
+// // // // // // //           .attr("width", NODE_CONFIG.baseWidth)
+// // // // // // //           .attr("height", NODE_CONFIG.baseHeight)
+// // // // // // //           .attr("rx", NODE_CONFIG.cornerRadius)
+// // // // // // //           .style("fill", COLORS.depths[depth]);
+
+// // // // // // //         const textGroup = d3.select(this).append("g").attr("class", "text-group");
+// // // // // // //         const fileName = d.data.file || "Unnamed";
+// // // // // // //         const truncatedName = fileName.length > NODE_CONFIG.textTruncateLength
+// // // // // // //           ? `${fileName.slice(0, NODE_CONFIG.textTruncateLength - 3)}...`
+// // // // // // //           : fileName;
+
+// // // // // // //         textGroup.append("text")
+// // // // // // //           .attr("y", -NODE_CONFIG.baseHeight / 4)
+// // // // // // //           .attr("text-anchor", "middle")
+// // // // // // //           .style("fill", COLORS.text.primary)
+// // // // // // //           .text(truncatedName);
+
+// // // // // // //         if (truncatedName !== fileName) {
+// // // // // // //           textGroup.append("title").text(fileName);
+// // // // // // //         }
+
+// // // // // // //         textGroup.append("text")
+// // // // // // //           .attr("y", 0)
+// // // // // // //           .attr("text-anchor", "middle")
+// // // // // // //           .style("fill", COLORS.text.secondary)
+// // // // // // //           .text(d.data.type || "Unknown");
+
+// // // // // // //         textGroup.append("text")
+// // // // // // //           .attr("y", NODE_CONFIG.baseHeight / 4)
+// // // // // // //           .attr("text-anchor", "middle")
+// // // // // // //           .style("fill", COLORS.text.tertiary)
+// // // // // // //           .text(`State: ${d.data.state ? d.data.state.length : 0}`);
+// // // // // // //       });
+
+// // // // // // //       const nodeUpdate = nodeEnter.merge(node);
+// // // // // // //       nodeUpdate.transition().duration(750).attr("transform", d => `translate(${d.x},${d.y})`);
+// // // // // // //       nodes.forEach(d => {
+// // // // // // //         d.x0 = d.x;
+// // // // // // //         d.y0 = d.y;
+// // // // // // //       });
+// // // // // // //       node.exit().remove();
+// // // // // // //     }
+
+// // // // // // //     update(root);
+
+// // // // // // //     const initialTransform = d3.zoomIdentity.translate(width / 2, height / 4).scale(0.8);
+// // // // // // //     svg.call(zoom.transform, initialTransform);
+
+// // // // // // //     setTimeout(() => {
+// // // // // // //       svg.transition()
+// // // // // // //         .duration(2000)
+// // // // // // //         .call(zoom.transform, d3.zoomIdentity.translate(width / 2, height / 6).scale(0.4));
+// // // // // // //     }, 1000);
+
+// // // // // // //     return () => svg.selectAll("*").remove();
+// // // // // // //   }, [data]);
+
+// // // // // // //   // **DARK MODE STYLES**
+// // // // // // //   const backgroundColor = isDarkMode ? "#1a1a1a" : "#ffffff";
+// // // // // // //   const textColor = isDarkMode ? "#ffffff" : "#333333";
+
+// // // // // // //   return (
+// // // // // // //     <div style={{ position: "relative" }}>
+// // // // // // //       <button
+// // // // // // //         onClick={() => setIsDarkMode(prev => !prev)}
+// // // // // // //         style={{
+// // // // // // //           position: "absolute",
+// // // // // // //           top: 20,
+// // // // // // //           right: 20,
+// // // // // // //           padding: "10px 20px",
+// // // // // // //           backgroundColor: isDarkMode ? "#333" : "#ddd",
+// // // // // // //           color: isDarkMode ? "#eee" : "#111",
+// // // // // // //           border: "none",
+// // // // // // //           borderRadius: "5px",
+// // // // // // //           cursor: "pointer"
+// // // // // // //         }}
+// // // // // // //       >
+// // // // // // //         Toggle Dark Mode
+// // // // // // //       </button>
+
+// // // // // // //       <h1
+// // // // // // //         style={{
+// // // // // // //           position: "absolute",
+// // // // // // //           top: 20,
+// // // // // // //           left: 20,
+// // // // // // //           color: textColor,
+// // // // // // //           fontSize: "24px",
+// // // // // // //           fontFamily: "Arial, sans-serif"
+// // // // // // //         }}
+// // // // // // //       >
+// // // // // // //         {appName || "React Component Tree"}
+// // // // // // //       </h1>
+
+// // // // // // //       <svg 
+// // // // // // //         ref={svgRef} 
+// // // // // // //         width="100vw" 
+// // // // // // //         height="100vh"
+// // // // // // //         style={{ backgroundColor }}
+// // // // // // //       >
+// // // // // // //         <style>{`
+// // // // // // //           .link { stroke: ${COLORS.link}; stroke-width: 1.5px; }
+// // // // // // //           .node text { font-size: 12px; font-weight: 500; fill: ${textColor}; }
+// // // // // // //         `}</style>
+// // // // // // //       </svg>
+// // // // // // //     </div>
+// // // // // // //   );
+// // // // // // // };
+
+// // // // // // // export default Dendrogram;
+
+
