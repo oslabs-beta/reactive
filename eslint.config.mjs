@@ -49,7 +49,7 @@ export default [
       // Add any other custom rules here
     },
   },
-  // Rules spiecific to certain files
+  // Rules specific to certain files
   {
     "files": ["src/linterTest.ts"],
     "rules": {

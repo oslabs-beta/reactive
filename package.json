@@ -15,15 +15,7 @@
     "commands": [
       {
         "command": "reactive.renderReact",
-        "title": "Render React Tree"
-      },
-      {
-        "command": "reactive.makeComponentTree",
-        "title": "Make Component Tree"
-      },
-      {
-        "command": "reactive.reactWebviewTree",
-        "title": "React Component Tree in webview"
+        "title": "Reactive: Start"
       }
     ]
   },

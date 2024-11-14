@@ -1,4 +1,4 @@
-
+// TODO: AppHeader and Dendrogram components should be children to App component (boiler plate starting code)
 
 // import React from 'react';
 
