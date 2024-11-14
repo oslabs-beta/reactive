@@ -1,4 +1,6 @@
-# React Visualizer VS Code Extension
+![Reactive (1)](https://github.com/user-attachments/assets/6e1b3500-3cfd-43c3-b5c7-0a77f1401c79)
+
+# Reactive VS Code Extension
 
 ## Overview
 
@@ -37,32 +39,27 @@ Reactive aims to solve this problem by generating a visual representation of you
 - VS Code Extension API
 - React
 - TypeScript/JavaScript
-TODO
-- [Other technologies or libraries]
-
-## Contributing
-TODO
-We welcome contributions! Please see our [CONTRIBUTING.md](link-to-contributing.md) for details on how to get started.
+- D3
+- @babel
+- Mocha
+- Webpack
 
 ### Contributions
-
-- **State Updates**: Inspect and monitor component state within the tree structure.
-- TODO: add items to be cleaned up 
+We welcome contributions!Please see our [CONTRIBUTING.md](link-to-contributing.md) for details on how to get started.
 
 ## Known Issues
-TODO
-1. **
-2. **
+1. Unable to access target app's name to render to webview panel 
+2. 
 
 Please report any additional issues on our [GitHub repository] https://github.com/oslabs-beta/reactive.
 
 ## Development Team
 
-| Name          | Role                    | GitHub                        | Email                   |
-| ------------- | -------------------     | ----------------------------- | ----------------------- |
-| Colin Rooney  | Full Stack Developer    | @github/12mv2                 | captaincolinr@gmail.com |
-| Micah Zeigler | Full Stack Developer    | [@github/MZiegler96](github-link) | micahziegler.se@gmail.com    |
-| Susana Lam    | Full Stack Developer    | [@github/susanalam](github-link)  | susana.lam1017@gmail.com    |
+| Name          | Role                    | GitHub                              | Email                   |
+| ------------- | -------------------     | -------------------------------     | ----------------------- |
+| Colin Rooney  | Full Stack Developer    | [@12mv2](12mv2)                     | captaincolinr@gmail.com |
+| Micah Ziegler | Full Stack Developer    | [@MZiegler96](MZiegler96)           | micahziegler.se@gmail.com  |
+| Susana Lam    | Full Stack Developer    | [@susanalam](susanalam)             | susana.lam1017@gmail.com    |
 
 ## Support
 
