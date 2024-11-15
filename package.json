@@ -46,13 +46,11 @@
     "build:prod": "npm run compile && webpack --config webpack.prod.js",
     "compile": "tsc -p ./tsconfig.json",
     "webpack": "webpack",
-    "frontend:watch": "webpack --watch",
-    "backend:watch": "tsc -watch -p ./tsconfig.json",
-    "watch": "tsc -watch -p ./tsconfig.json",
+    "watch": "concurrently \"npm run frontend:watch\" \"npm run backend:watch\"",
     "lint": "eslint src",
     "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js",
-    "package": "vsce package"  
+    "package": "vsce package"
   },
 
   "devDependencies": {
@@ -71,7 +69,8 @@
     "glob": "^11.0.0",
     "jsdom": "^25.0.1",
     "typescript": "^5.6.3",
-    "vscode": "^1.1.37"
+    "vscode": "^1.1.37",
+    "concurrently": 
   },
   "dependencies": {
     "@babel/parser": "^7.25.6",
