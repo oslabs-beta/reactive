@@ -1,0 +1,89 @@
+# .github/ISSUE_TEMPLATE/config.yml
+blank_issues_enabled: false
+contact_links:
+  - name: Reactive Community Support
+    url: https://github.com/oslabs-beta/reactive/discussions
+    about: Please ask and answer questions here.
+
+# .github/ISSUE_TEMPLATE/bug_report.md
+---
+name: 🐛 Bug Report
+about: Create a report to help us improve
+title: '[BUG] '
+labels: 'bug'
+assignees: ''
+---
+
+## Describe the bug
+A clear and concise description of what the bug is.
+
+## Environment
+- OS: [e.g., Windows 10, macOS 12.0]
+- VS Code Version: [e.g., 1.60.0]
+- Reactive Version: [e.g., 1.0.0]
+
+## To Reproduce
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '....'
+3. See error
+
+## Expected behavior
+A clear description of what you expected to happen.
+
+## Screenshots
+If applicable, add screenshots to help explain your problem.
+
+## Additional context
+Add any other context about the problem here.
+
+# .github/ISSUE_TEMPLATE/feature_request.md
+---
+name: 🚀 Feature Request
+about: Suggest an idea for Reactive
+title: '[FEATURE] '
+labels: 'enhancement'
+assignees: ''
+---
+
+## Is your feature request related to a problem?
+A clear and concise description of the problem.
+
+## Describe the solution you'd like
+A clear and concise description of what you want to happen.
+
+## Describe alternatives you've considered
+A clear and concise description of any alternative solutions you've considered.
+
+## Additional context
+Add any other context or screenshots about the feature request here.
+
+# .github/ISSUE_TEMPLATE/first_time_contributor.md
+---
+name: 🌱 First Time Contributor
+about: Get started with your first contribution
+title: '[FIRST-CONTRIB] '
+labels: 'good first issue'
+assignees: ''
+---
+
+## Welcome! 
+We're excited to help you with your first contribution!
+
+## What would you like to work on?
+- [ ] Documentation improvement
+- [ ] Bug fix
+- [ ] Small feature enhancement
+- [ ] Test addition
+- [ ] Other (please describe)
+
+## Do you need help with setup?
+Let us know if you need help with:
+- [ ] Fork and clone the repository
+- [ ] Setting up the development environment
+- [ ] Understanding the codebase
+- [ ] Testing procedures
+- [ ] Making a pull request
+
+## Additional Notes
+Add any questions or notes here.
