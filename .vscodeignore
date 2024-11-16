@@ -1,10 +1,57 @@
-.vscode/**
-.vscode-test/**
-test/**
-.gitignore
-.yarnrc
-vsc-extension-quickstart.md
-**/jsconfig.json
-**/*.map
-**/eslint.config.mjs
-**/.vscode-test.*
+# ==================================
+# VSCODE EXTENSION IGNORE FILE
+# ==================================
+
+# IGNORED FILES/DIRECTORIES
+# ------------------------
+# Source and Build Files
+src/**                  # All TypeScript/JavaScript source files
+dist/**                 # Development build output from webpack
+node_modules/**         # NPM dependencies (will be installed by user)
+.vscode/**             # VS Code editor settings
+.vscode-test/**        # VS Code test environment files
+.vscode-test.mjs       # VS Code test configuration
+
+# Config and Build Files
+.gitignore             # Git ignore file
+.yarnrc               # Yarn config
+vsc-extension-quickstart.md  # VS Code extension guide
+eslint.config.mjs      # ESLint configuration
+webpack.config.js      # Development webpack config
+webpack.prod.js        # Production webpack config
+tsconfig.json          # TypeScript configuration
+**/tsconfig.json       # Any other TypeScript configs
+
+# Debug and Source Map Files
+**/*.map              # Source maps for debugging
+**/*.ts               # TypeScript source files
+**/*.test.js          # JavaScript test files
+**/*.test.ts          # TypeScript test files
+
+# Test Files
+test/**               # Test directory
+**/test/**           # Any test directories
+
+# System Files
+**/.DS_Store         # Mac OS system files
+**/Thumbs.db         # Windows system files
+
+# KEPT FILES (using ! to un-ignore)
+# --------------------------------
+!out/**              # KEEP: Production builds from webpack
+                    # This is where our extension actually runs from
+
+!images/Reactive.png # KEEP: Extension icon
+                    # Required for VS Code marketplace
+
+!package.json        # KEEP: Required for extension metadata and npm
+                    # Contains extension configuration and dependencies
+
+!README.md          # KEEP: Extension documentation
+                    # Shows up on VS Code marketplace
+
+!CHANGELOG.md       # KEEP: Version history
+                    # Important for users to track changes
+
+# Note: Removed the React components sourcemap support
+# as it's not needed in production and reduces package size

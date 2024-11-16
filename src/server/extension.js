@@ -17,15 +17,15 @@ Example Path Processing:
 {
   root: '/',
   dir: '/Users/project/src/components',
-  base: 'MyApp.tsx',    // Currently used for appName
-  name: 'MyApp',        // Could use this to avoid extension
+  base: 'MyApp.tsx',    // Currently used for compName
+  compName: 'MyApp',        // Could use this to avoid extension
   ext: '.tsx'
 }
 
 MESSAGE FLOW:
 -----------
 Extension → Webview → React Components
-1. Initial load: Sends tree data with app name
+1. Initial load: Sends tree data (TODO with app compName)
 2. Webview processes: Updates visualization
 3. React renders: Shows component hierarchy
 */
@@ -41,7 +41,7 @@ function activate(context) {
     // Configure file picker to only allow React component files
     const options = {
       canSelectMany: false,
-      openLabel: 'Select React Component File (.jsx or .tsx)',
+      openLabel: 'Select React Component',
       filters: {
         'React Components': ['jsx', 'tsx']  // Limiting to React component files
       }
@@ -52,7 +52,7 @@ function activate(context) {
     if (fileUri && fileUri[0]) {
       const filePath = fileUri[0].fsPath;
       const baseDir = path.dirname(filePath);
-      const appName = path.parse(filePath).base;  // Get filename with extension
+      const compName = path.parse(filePath).base;  // Get filename with extension
       
       // Generate component tree and convert to string
       const tree = buildComponentTree(filePath, baseDir);
@@ -61,7 +61,7 @@ function activate(context) {
       // Create webview panel for visualization
       const panel = vscode.window.createWebviewPanel(
         'dendrogram',
-        `Component Tree Built From ${appName}`,  // Panel title shows app name
+        `Component Tree Built From ${compName}`,  // Panel title shows app compName
         vscode.ViewColumn.One,
         {
           enableScripts: true,
@@ -76,14 +76,14 @@ function activate(context) {
       const webviewJsUri = panel.webview.asWebviewUri(webviewJsPath);
 
       // Log webview creation
-      console.log(`Loading Webview for ${appName}`);
+      console.log(`Loading Webview for ${compName}`);
       
-      // Generate and set webview HTML content
-      panel.webview.html = getWebviewContent(appName, webviewJsUri, treeObj);
+      // Generate and set webview HTML content / Combines all pieces
+      panel.webview.html = getWebviewContent(compName, webviewJsUri, treeObj);
 
-      // Handle messages from webview
+      // Handle messages from webview / Pings window
       panel.webview.onDidReceiveMessage(async (message) => {
-        console.log("Received message: ", message); // Debug logging
+        // console.log("Received message: ", message); // Checks backend to frontend connection
         
         if (message.type === 'onData') {
           console.log(`Received message: ${message.value}`);
@@ -108,14 +108,14 @@ function activate(context) {
   context.subscriptions.push(renderReact);
 
   // Generate HTML content for webview
-  function getWebviewContent(name, uri, obj) {
+  function getWebviewContent(compName, uri, obj) {
     return `
       <!DOCTYPE html>
       <html lang="en">
       <head>
           <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Component Tree: ${name}</title>
+          <meta compName="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Component Tree: ${compName}</title>
       </head>
       <body>
         <div id="root"></div>
@@ -126,7 +126,7 @@ function activate(context) {
             vscode.postMessage({
               type: 'onData',
               value: ${obj},
-              appName: '${name}'  // Pass app name to React components
+              compName: '${compName}'  // Pass compName to React components
             });
           };
         </script>
@@ -148,29 +148,28 @@ module.exports = {
 DATA FLOW SUMMARY:
 ----------------
 1. File Selection:
-   User Input → fileUri → filePath → appName
+   User Input → fileUri → filePath → compName
 
 2. Tree Generation:
    filePath → buildComponentTree → treeObj
 
 3. Webview Creation:
-   appName → panel title
-   appName + treeObj → webview HTML
+   compName → panel title
+   compName + treeObj → webview HTML
 
 4. Message System:
-   webview ←→ extension
-   Passes: tree data, file path, settings
+  webview panel is loaded via getWebviewContent
 
-DEBUGGING TIPS:
--------------
-1. Check console logs for:
-   - Webview loading
-   - Message receipt
-   - Data posting
+  window.onload - extension line 125
+	  triggers vscode.postMessage with "onData" (lets the extension know webview is ready for messages)
 
-2. Common Issues:
-   - Missing file extensions
-   - Invalid component files
-   - Message handling errors
+  panel.webview.onDidRecieveMessage - extension line 85
+	  if onData (extension now knows the webview is ready for data)
+		  panel.webview.postMessage with "astData" - extension line 95 (sends backend data to 		frontend for dendrogram rendering)
+
+  window.addEventListener with "message" - index.js line 115
+	  if astData (frontend recieves and manipulates AST)
+      webview ←→ extension
+      Passes: tree data, file path, settings
 */
 
