@@ -25,7 +25,7 @@ Example Path Processing:
 MESSAGE FLOW:
 -----------
 Extension → Webview → React Components
-1. Initial load: Sends tree data with app name
+1. Initial load: Sends tree data (TODO with app name)
 2. Webview processes: Updates visualization
 3. React renders: Shows component hierarchy
 */
@@ -41,7 +41,7 @@ function activate(context) {
     // Configure file picker to only allow React component files
     const options = {
       canSelectMany: false,
-      openLabel: 'Select React Component File (.jsx or .tsx)',
+      openLabel: 'Select React Component (.jsx or .tsx)',
       filters: {
         'React Components': ['jsx', 'tsx']  // Limiting to React component files
       }
