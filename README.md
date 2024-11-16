@@ -1,4 +1,4 @@
-# React Visualizer VS Code Extension
+# Reactive VS Code Extension
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/oslabs-reactive.reactive)](https://marketplace.visualstudio.com/items?itemName=oslabs-reactive.reactive)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/oslabs-reactive.reactive)](https://marketplace.visualstudio.com/items?itemName=oslabs-reactive.reactive)
