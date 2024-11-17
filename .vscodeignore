@@ -1,6 +1,6 @@
-# Ignore unnecessary files/directories
 
-# Source and Development Files
+
+
 src/**                   # All source code
 dist/**                  # Development build output
 node_modules/**          # Dependencies (users will install them)
@@ -15,18 +15,18 @@ node_modules/**          # Dependencies (users will install them)
 *.test.ts                # TypeScript test files
 test/**                  # Test directory
 
-# Build and Config Files
+
 .gitignore               # Git ignore config
 webpack.config.js        # Development webpack config
 webpack.prod.js          # Production webpack config
 tsconfig.json            # TypeScript config
 **/tsconfig.json         # Any additional TypeScript configs
 
-# System Files
+
 **/.DS_Store             # Mac OS system files
 **/Thumbs.db             # Windows system files
 
-# Include the necessary files/directories
+
 !out/**                  # Include the production build
 !images/reactive.png     # Include the extension icon
 !package.json            # Include metadata
