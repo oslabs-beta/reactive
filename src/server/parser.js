@@ -180,4 +180,4 @@ function buildComponentTree(filePath, baseDir) {
  * // - Extension matching
  */
 
-module.exports = { buildComponentTree };
+module.exports = { buildComponentTree, parseFileToAST };
