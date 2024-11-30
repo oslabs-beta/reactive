@@ -184,11 +184,11 @@ reactive/
 
 ## Development Team
 
-| Name          | Role                    | GitHub                        | Email                   |
-| ------------- | -------------------     | ----------------------------- | ----------------------- |
-| Colin Rooney  | Full Stack Developer    | [@12mv2](https://github.com/12mv2) | captaincolinr@gmail.com |
-| Micah Zeigler | Full Stack Developer    | [@MZiegler96](https://github.com/MZiegler96) | micahziegler.se@gmail.com    |
-| Susana Lam    | Full Stack Developer    | [@susanalam](https://github.com/susanalam)  | susana.lam1017@gmail.com    |
+| Name          | Role               | GitHub                        | Email                   |
+| ------------- | ------------------ | ----------------------------- | ----------------------- |
+| Colin Rooney  | Software Engineer  | [@12mv2](https://github.com/12mv2) | captaincolinr@gmail.com |
+| Micah Zeigler | Software Engineer  | [@MZiegler96](https://github.com/MZiegler96) | micahziegler.se@gmail.com    |
+| Susana Lam    | Software Engineer  | [@susanalam](https://github.com/susanalam)  | susana.lam1017@gmail.com    |
 
 ## Support
 
