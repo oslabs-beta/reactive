@@ -44,23 +44,59 @@ Don't worry if this seems like a lot - we'll help you through it! Here's what yo
 
 ## 3. Make Your First Contribution 🎉
 
+### Types of Good First Issues
+
+At Reactive, we maintain several types of beginner-friendly issues:
+
+#### TypeScript Migration Tasks
+- Convert individual JavaScript/JSX files to TypeScript/TSX
+- Perfect for learning TypeScript in a real project
+- Clear guidelines and examples provided
+- Focus on single, self-contained components
+
+#### Documentation & User Experience
+- Create usage examples for specific features
+- Add demo GIFs of key workflows
+- Develop clear, illustrative screenshots
+- Each task comes with clear requirements and examples
+
+### Getting Started with an Issue
+
 1. **Find an Issue**
    - Look for issues labeled `good first issue` in our repository
    - Comment on the issue saying you'd like to work on it
    - We'll guide you through it!
 
 2. **Make Changes**
-   - Create a new branch for your work
+   - Create a new branch following our naming convention:
    ```bash
-   git checkout -b my-first-contribution
+   git checkout -b feature/GH-123-brief-description
+   ```
+   Where:
+   - `feature/` indicates it's a new feature
+   - `GH-123` is the GitHub issue number
+   - `brief-description` is 2-4 words describing the change
+   
+   For example:
+   ```bash
+   git checkout -b feature/GH-45-convert-app-tsx
+   git checkout -b feature/GH-52-add-usage-demo
    ```
    - Make your changes
    - Test them out
+   - Follow the issue's specific guidelines
 
 3. **Submit Your Work**
    - Push your changes
    - Create a Pull Request
    - We'll review it and provide feedback!
+
+### Tips for Success
+- Read the entire issue description before starting
+- Ask questions if anything is unclear
+- Keep changes focused on the issue scope
+- Test your changes thoroughly
+- Update any relevant documentation
 
 ## 4. Need Help? 🤝
 
