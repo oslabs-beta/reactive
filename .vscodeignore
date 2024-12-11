@@ -1,10 +1,34 @@
-.vscode/**
-.vscode-test/**
-test/**
-.gitignore
-.yarnrc
-vsc-extension-quickstart.md
-**/jsconfig.json
-**/*.map
-**/eslint.config.mjs
-**/.vscode-test.*
+
+
+
+src/**                   # All source code
+dist/**                  # Development build output
+node_modules/**          # Dependencies (users will install them)
+.vscode/**               # VS Code workspace settings
+.vscode-test/**          # VS Code test environment
+.vscode-test.mjs         # VS Code test runner config
+*.map                    # Source maps
+*.ts                     # TypeScript files
+*.tsx                    # React TypeScript files
+*.jsx                    # React JavaScript files
+*.test.js                # JavaScript test files
+*.test.ts                # TypeScript test files
+test/**                  # Test directory
+
+
+.gitignore               # Git ignore config
+webpack.config.js        # Development webpack config
+webpack.prod.js          # Production webpack config
+tsconfig.json            # TypeScript config
+**/tsconfig.json         # Any additional TypeScript configs
+
+
+**/.DS_Store             # Mac OS system files
+**/Thumbs.db             # Windows system files
+
+
+!out/**                  # Include the production build
+!images/reactive.png     # Include the extension icon
+!package.json            # Include metadata
+!README.md               # Include documentation
+!CHANGELOG.md            # Include version history

@@ -1,22 +1,12 @@
-# React Visualizer VS Code Extension
+# Reactive VS Code Extension
+
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/oslabs-reactive.reactive)](https://marketplace.visualstudio.com/items?itemName=oslabs-reactive.reactive)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/oslabs-reactive.reactive)](https://marketplace.visualstudio.com/items?itemName=oslabs-reactive.reactive)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Overview
 
 **Reactive** is a powerful VS Code extension designed to enhance the development experience for React applications. Developed as part of the OSLabs program, this tool provides a comprehensive visual representation of your React component structure, making it easier to understand and navigate React projects. 
-
-## Product Description
-
-Oftentimes as applications scale, it becomes increasingly challenging to keep track of the structure of an app. As a result, this extends the amount of time it takes for new developers to understand the application landscape and makes it impractical to keep track of code migration progress.   
-
-Reactive aims to solve this problem by generating a visual representation of your app's component landscape within VS Code. This extension enables greater visibility into the architecture of the React app and is especially valuable for teams transitioning from class-based components to functional components, as well as from JavaScript to TypeScript.
-
-## Features
-
-- **Component Tree Visualization**: Procure a clear, hierarchical view of your React component structure.
-- **Component Type Differentiation**: Easily distinguish between functional and class components.
-- **Language Identification**: Quickly identify TypeScript and JavaScript components.
-- **Full App Structure**: Visualize the entire structure of your React application.
-- **State Inspection**: Identify state variables across components. 
 
 ## Installation
 
@@ -32,37 +22,173 @@ Reactive aims to solve this problem by generating a visual representation of you
 3. Click on components in the tree to collapse.
 4. Click on State within component node to open State details 
 
+## Features
+
+- **Component Tree Visualization**: Procure a clear, hierarchical view of your React component structure.
+- **Component Type Differentiation**: Easily distinguish between functional and class components.
+- **Language Identification**: Quickly identify TypeScript and JavaScript components.
+- **Full App Structure**: Visualize the entire structure of your React application.
+- **State Inspection**: Identify state variables across components. 
+
+## Product Description
+
+Oftentimes as applications scale, it becomes increasingly challenging to keep track of the structure of an app. As a result, this extends the amount of time it takes for new developers to understand the application landscape and makes it impractical to keep track of code migration progress.   
+
+Reactive aims to solve this problem by generating a visual representation of your app's component landscape within VS Code. This extension enables greater visibility into the architecture of the React app and is especially valuable for teams transitioning from class-based components to functional components, as well as from JavaScript to TypeScript.
+
+## Contributing to Reactive 🤝
+
+We love your input! Reactive is an open-source project, and we welcome contributors of all skill levels.
+
+### Quick Start
+```bash
+# Fork and clone the repository
+git clone https://github.com/your-username/reactive.git
+
+# Install dependencies
+npm install
+
+# Start development environment
+npm run dev
+```
+
+### Ways to Contribute
+- Fix bugs and issues
+- Add new features
+- Improve documentation
+- Submit feature requests
+- Report bugs
+- Review code
+
+### Getting Started
+- **First Time Contributors**: Check out our [First-Time Contributors Guide](CONTRIBUTING.md#new-to-open-source)
+- **Ready to Code**: See our [Contribution Guidelines](CONTRIBUTING.md#experienced-contributor-guide)
+- **Looking for Tasks**: Browse our [good first issues](https://github.com/oslabs-beta/reactive/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+
+For detailed setup instructions, coding guidelines, and best practices, see our [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Development Setup
+
+### For Contributors
+1. **Fork & Clone**
+   ```bash
+   # Fork the repository first on GitHub, then:
+   git clone https://github.com/your-username/reactive.git
+   cd reactive
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Initial Build**
+   ```bash
+   npm run build
+   ```
+
+4. **Start Development**
+   ```bash
+   # Watch mode for automatic rebuilds
+   npm run watch
+   ```
+
+5. **Launch Extension in Debug Mode**
+   - Press `F5` in VS Code to open Extension Development Host
+   - OR select Run > Start Debugging
+   - A new VS Code window will open with the extension loaded
+
+6. **Test the Extension**
+   - Open a React project in the Extension Development Host
+   - Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+   - Type and select `Reactive: Start`
+   - Select the highest-level component in your React application
+   - The component tree visualization will appear
+
+### Common Development Commands
+```bash
+# Start or Refresh debugger/Extension Development Host
+fn F5
+```
+
+### Production Build & Testing
+```bash
+# Create production build
+npm run build:prod
+
+# Package extension into .vsix file
+npm run package
+
+# Test the packaged extension
+# 1. In VS Code, in the Extensions view click the '...' menu (top left)
+# 2. Select 'Install from VSIX...'
+# 3. Choose the generated .vsix file
+# 4. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+# 5. Type and select `Reactive: Start`
+# 6. Select the highest-level component in your React application
+#  The component tree visualization will appear
+```
+
+### Debugging Tips
+- Use VS Code's Debug Console to view extension logs
+- Set breakpoints in the TypeScript files
+- Use `console.log` in the webview (outputs to DevTools in Extension Development Host)
+- Access Extension Development Host's Developer Tools:
+  - Help > Toggle Developer Tools
+
+### Common Issues
+- If the extension bla bla bla:
+  1. Stop the extension
+  2. Run ``
+  3. Restart debugging (`F5`)
+- If webview bla bla bla:
+  1. Run Command ? (`Ctrl+Shift+P`)
+  2. Execute "bla bla bla"
+
 ## Technologies Used
 
-- VS Code Extension API
-- React
-- TypeScript/JavaScript
-TODO
-- [Other technologies or libraries]
+### Core Technologies
+- **VS Code Extension API** - For extension development and VS Code integration
+- **React 18** - Frontend framework for the webview interface
+- **TypeScript/JavaScript** - Primary development languages
+- **D3.js** - For component tree visualization and dendrograms
+- **Webpack 5** - Module bundling for both extension and webview
 
-## Contributing
-TODO
-We welcome contributions! Please see our [CONTRIBUTING.md](link-to-contributing.md) for details on how to get started.
+### Development Tools
+- **Babel** - JavaScript/TypeScript compilation and React preprocessing
+- **ESLint** - Code quality and style checking
+- **Mocha** - Testing framework
 
-### Contributions
+### Extension Architecture
+- **Backend**: Node.js-based VS Code extension (TypeScript/JavaScript)
+- **Frontend**: React-based webview (TypeScript/JavaScript)
+- **Parser**: Custom React component parser using Babel
 
-- **State Updates**: Inspect and monitor component state within the tree structure.
-- TODO: add items to be cleaned up 
+### Project Structure
+```
+reactive/
+├── src/                    # Source code
+│   ├── server/            # Extension backend (TS/JS)
+│   ├── webview/           # React frontend (TS/JS)
+│   └── test/              # Test suites
+├── dist/                  # Frontend production builds
+└── out/                   # Backend builds (dev/prod) & frontend dev builds
+```
 
-## Known Issues
-TODO
-1. **
-2. **
+## Documentation
 
-Please report any additional issues on our [GitHub repository] https://github.com/oslabs-beta/reactive.
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [VS Code Development Guide](VS_CODE_DEVELOPMENT.md)
+- [Changelog](CHANGELOG.md)
+- [License](LICENSE.md)
 
 ## Development Team
 
 | Name          | Role                    | GitHub                        | Email                   |
 | ------------- | -------------------     | ----------------------------- | ----------------------- |
-| Colin Rooney  | Full Stack Developer    | @github/12mv2                 | captaincolinr@gmail.com |
-| Micah Zeigler | Full Stack Developer    | [@github/MZiegler96](github-link) | micahziegler.se@gmail.com    |
-| Susana Lam    | Full Stack Developer    | [@github/susanalam](github-link)  | susana.lam1017@gmail.com    |
+| Colin Rooney  | Full Stack Developer    | [@12mv2](https://github.com/12mv2) | captaincolinr@gmail.com |
+| Micah Zeigler | Full Stack Developer    | [@MZiegler96](https://github.com/MZiegler96) | micahziegler.se@gmail.com    |
+| Susana Lam    | Full Stack Developer    | [@susanalam](https://github.com/susanalam)  | susana.lam1017@gmail.com    |
 
 ## Support
 

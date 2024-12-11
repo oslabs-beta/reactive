@@ -6,7 +6,7 @@ const traverse = require('@babel/traverse').default;
 // Helper function to read files and parse the AST
 function parseFileToAST(filePath) {
   if (!fs.existsSync(filePath)) {
-    console.error(`File does not exist: ${filePath}`);
+    // console.error(`File does not exist: ${filePath}`);
     return null;
   }
   const code = fs.readFileSync(filePath, 'utf-8');
@@ -56,6 +56,7 @@ function findComponentTypeAndState(ast) {
     },
     //Parse for state data
 
+    // Looking for state
     VariableDeclarator(path) {
       //const result = {};
         if (path.node && path.node.init && path.node.init.callee && path.node.init.callee.name === 'useState'){
@@ -156,7 +157,7 @@ function buildComponentTree(filePath, baseDir) {
     file: path.basename(filePath),
     type: type,
     state: stateVariables,
-    children: children.filter(Boolean),
+    children: children
   };
 }
 
