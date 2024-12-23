@@ -138,6 +138,10 @@ reactive/
 - Open a new issue with the question label
 - Join our community discussions
 
+## Development Environment
+
+For detailed information about the npm scripts available in the project, their purposes, and when to use them during development, please refer to the [Development Scripts Guide](DEVELOPMENT_SCRIPTS.md).
+
 ---
 
 Thank you for contributing to Reactive! 🎉
