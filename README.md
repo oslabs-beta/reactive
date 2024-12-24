@@ -144,6 +144,10 @@ npm run package
 - If webview bla bla bla:
   1. Run Command ? (`Ctrl+Shift+P`)
   2. Execute "bla bla bla"
+  
+### Development Scripts Guide
+For detailed information about the npm scripts available in the project, their purposes, and when to use them during development, please refer to the [Development Scripts Guide](DEVELOPMENT_SCRIPTS.md).
+
 
 ## Technologies Used
 
