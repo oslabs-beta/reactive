@@ -56,6 +56,8 @@ function activate(context) {
       
       // Generate component tree and convert to string
       const tree = buildComponentTree(filePath, baseDir);
+      // Generate data for testing parser performanceperformance
+      console.log('Component Tree Data:', JSON.stringify(tree, null, 2)); 
       const treeObj = JSON.stringify(tree, null, 2);
 
       // Create webview panel for visualization

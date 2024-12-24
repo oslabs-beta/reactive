@@ -16,7 +16,11 @@ export async function run(): Promise<void> {
     try {
         console.log('Looking for test files in:', testsRoot);
         // Change the glob pattern to explicitly look for extension.test.ts/js
-        const testFiles = await glob(['**/extension.test.js', '**/dendrogram.test.js'], { 
+        const testFiles = await glob([
+            '**/extension.test.js', 
+            '**/dendrogram.test.js',
+            '**/parserPerformance.test.js'
+        ], { 
             cwd: testsRoot,
             absolute: true  // Get absolute paths
         });
