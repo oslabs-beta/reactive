@@ -226,7 +226,7 @@ export const ${componentName} = {
             if (node.type === null) stats.nullCount++;
 
             if (node.children) {
-                node.children.forEach((child: any) => traverse(child));
+                node.children.forEach((child: TreeNode) => traverse(child));
             }
         }
 
