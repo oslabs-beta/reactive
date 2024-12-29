@@ -204,8 +204,14 @@ export const ${componentName} = {
 
     /**
      * Analyzes the component tree and returns statistics
+     * Entire node is the TreeNode interface
      */
-    function countComponents(tree: any) {
+    interface TreeNode { 
+        type: string | null; // 'functional', 'class', or null
+        state?: string[]; // an array of strings 
+        children?: TreeNode[]; // an array of other TreeNode's
+    }
+    function countComponents(tree: TreeNode) {
         let stats = {
             total: 0,
             withState: 0,
@@ -213,14 +219,14 @@ export const ${componentName} = {
             nullCount: 0
         };
 
-        function traverse(node: any) {
+        function traverse(node: TreeNode) {
             stats.total++;
             if (node.state && node.state.length > 0) stats.withState++;
             if (node.type === 'class') stats.classCount++;
             if (node.type === null) stats.nullCount++;
 
             if (node.children) {
-                node.children.forEach((child: any) => traverse(child));
+                node.children.forEach((child: TreeNode) => traverse(child));
             }
         }
 
