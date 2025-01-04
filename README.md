@@ -20,7 +20,17 @@
 1. Open a React project in VS Code.
 2. Access the Reactive from the VS Code sidebar.
 3. Click on components in the tree to collapse.
-4. Click on State within component node to open State details 
+4. Click on State within component node to open State details
+
+## Tutorials
+
+Learn how to get started with Reactive through these video guides:
+
+How to Download ReactiveThis video walks you through downloading and using the Reactive VS Code extension:
+https://www.youtube.com/watch?v=KttJvc9F2a8
+
+How to Make a vsix file and use it:
+https://www.youtube.com/watch?v=pF-JJ7jmMp4
 
 ## Features
 
