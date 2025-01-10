@@ -5,16 +5,17 @@ export type DisposableOptions = {
     canSelectMany: boolean;
     openLabel: string;
     filters: FiltersObject;
-}
+};
 
 export type FiltersObject = {
-    'Accepted Files': string[]; 
-}
+    [key: string]: string[]; // Allow any string keys with string[] values
+};
+  
 
 export type TreeObject = {
     file: string;
     children: TreeObject;
-}
+};
 
 //REATIVE/src/types.ts
 

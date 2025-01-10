@@ -142,3 +142,47 @@ npm run package
    ```bash
    vsce publish
    ```
+
+## Custom Types
+
+### DisposableOptions
+Represents options for disposable items, including selection and filtering options.
+
+```typescript
+export type DisposableOptions = {
+    canSelectMany: boolean;
+    openLabel: string;
+    filters: FiltersObject;
+}
+```
+
+### FiltersObject
+Represents a filter object with accepted file types.
+
+```typescript
+export type FiltersObject = {
+    'Accepted Files': string[]; 
+}
+```
+
+### TreeObject
+Represents a hierarchical structure for files or components, including file names and children.
+
+```typescript
+export type TreeObject = {
+    file: string;
+    children: TreeObject;
+}
+```
+
+### TestComponent
+Represents a test component with file, type, state, and imports properties.
+
+```typescript
+export type TestComponent = {
+    file: string;
+    type: 'functional' | 'class' | null;
+    state: string[];
+    imports: string[];
+}
+```
