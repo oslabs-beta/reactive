@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { buildComponentTree } from './parser';
+import { buildComponentTree } from './parser.js';
 import { DisposableOptions, FiltersObject, TreeObject } from '../types';
 
 export function activate(context: vscode.ExtensionContext) {
