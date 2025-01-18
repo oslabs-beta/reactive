@@ -2,6 +2,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "ES2020",
+    "moduleResolution": "node",
     "allowJs": true,
     "jsx": "react", 
     "lib": ["ES2021"],
@@ -16,10 +17,11 @@
   },
   "include": [
     "src/**/*",
-    "src/server.extension.ts",
   ],
   "exclude": [
     "node_modules",
-    ".vscode-test"
+    ".vscode-test",
+    "**TODO_parser.typescript.ts",
+    "src/server/TODO_parser.typescript.ts"
   ]
 }

@@ -1,15 +1,22 @@
 const fs = require('fs');
 const path = require('path');
-const parser = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
+let parser;
+let traverse;
+
+async function initializeBabel() {
+  parser = await import('@babel/parser');
+  traverse = (await import('@babel/traverse')).default;
+}
 
 // Helper function to read files and parse the AST
-function parseFileToAST(filePath) {
+async function parseFileToAST(filePath) {
   if (!fs.existsSync(filePath)) {
     // console.error(`File does not exist: ${filePath}`);
     return null;
   }
   const code = fs.readFileSync(filePath, 'utf-8');
+
+  await initializeBabel(); // Ensure Babel is initialized before parsing
   
   return parser.parse(code, {
     sourceType: 'module', // ECMAScript module
@@ -25,9 +32,11 @@ function getComponentName(node) {
 }
 
 // Traverse the AST and determine the component type (class or functional)
-function findComponentTypeAndState(ast) {
+async function findComponentTypeAndState(ast) {
   let type = null;
   const stateVariables = [];
+
+  await initializeBabel(); // Ensure Babel is initialized before traversing
 
   traverse(ast, {
     // Check for class component
@@ -69,8 +78,10 @@ function findComponentTypeAndState(ast) {
 }
 
 // Parse the imports to identify child components
-function findImportsInAST(ast) {
+async function findImportsInAST(ast) {
   const imports = [];
+
+  await initializeBabel(); // Ensure Babel is initialized before traversing
 
   if (!ast) return imports;
 
@@ -91,7 +102,8 @@ function findImportsInAST(ast) {
 }
 
 // Build a component tree from the file system and source code
-function buildComponentTree(filePath, baseDir) {
+async function buildComponentTree(filePath, baseDir) {
+  await initializeBabel(); // Ensure Babel is initialized before parsing
   /* DEBUG LOGGING GUIDE
    * To enable full debug logging, uncomment the console.log statements below
    * Logging levels:
@@ -111,15 +123,15 @@ function buildComponentTree(filePath, baseDir) {
     return null;
   }
 
-  const ast = parseFileToAST(absoluteFilePath);
-  const {type, stateVariables} = findComponentTypeAndState(ast);
+  const ast = await parseFileToAST(absoluteFilePath);
+  const {type, stateVariables} = await findComponentTypeAndState(ast);
   
   // LEVEL 1: Import Detection (To see how buildComponentTree works)
-  const imports = findImportsInAST(ast);
+  const imports = await findImportsInAST(ast);
   //console.log('Found imports:', imports);
 
-  const children = imports
-    .map((importPath) => {
+  const children = await Promise.all(imports
+    .map(async (importPath) => {
       // LEVEL 3: Import Processing
       // console.log('\n--- Processing import:', importPath);
 
@@ -151,7 +163,7 @@ function buildComponentTree(filePath, baseDir) {
 
       return buildComponentTree(resolvedPath, baseDir);
     })
-    .filter(Boolean);
+    .filter(Boolean));
 
   return {
     file: path.basename(filePath),

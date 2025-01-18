@@ -7,52 +7,28 @@ module.exports = [
     target: 'node',
     entry: './out/server/extension.js',
     output: {
-      path: path.resolve(__dirname, 'out'), 
-      filename: 'extension.js',
-      libraryTarget: 'commonjs2',
-      clean: true
+        path: path.resolve(__dirname, 'out/server'), 
+        filename: 'extension.js',
+        libraryTarget: 'commonjs2',
+        library: {
+            type: 'commonjs2'
+        }
     },
     externals: {
-      vscode: 'commonjs vscode',
-      '@babel/parser': 'commonjs @babel/parser',
-      '@babel/traverse': 'commonjs @babel/traverse'
+        vscode: 'commonjs vscode'
     },
     resolve: {
-      extensions: ['.js', '.ts'],
+        extensions: ['.js', '.ts'],
     },
     optimization: {
-      minimize: true  
-    }
-  },
-  {
-    name: 'webview',
-    mode: 'production',
-    target: 'web',
-    entry: './src/webview/index.js',
-    output: {
-      path: path.resolve(__dirname, 'out/webview'),  
-      filename: 'webview.js',
-      clean: false
+        minimize: false
     },
-    resolve: {
-      extensions: ['.js', '.jsx', '.ts', '.tsx'],
-    },
-    module: {
-      rules: [
-        {
-          test: /\.(js|jsx)$/,
-          exclude: /node_modules/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              presets: ['@babel/preset-env', '@babel/preset-react'],
-            },
-          },
-        },
-      ],
-    },
-    optimization: {
-      minimize: true  
-    }
-  },
+    plugins: [
+        new (require('webpack')).BannerPlugin({ 
+            banner: 'const vscode = require("vscode");\n',
+            raw: true,
+            entryOnly: true
+        })
+    ]
+}
 ];

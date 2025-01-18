@@ -33,7 +33,6 @@
     "rsc"
   ],
   "activationEvents": [
-    "*",
     "onStartupFinished",
     "onCommand:reactive.renderReact"
   ],
@@ -46,6 +45,7 @@
       }
     ]
   },
+
   "scripts": {
     "build": "npm run compile && webpack --config webpack.config.js",
     "build:prod": "npm run compile && webpack --config webpack.prod.js",
@@ -72,7 +72,7 @@
     "@typescript-eslint/parser": "^8.10.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "concurrently": "^9.1.2",
+    "concurrently": "^9.1.0",
     "eslint": "^9.13.0",
     "eslint-plugin-mocha": "^10.5.0",
     "glob": "^11.0.0",
