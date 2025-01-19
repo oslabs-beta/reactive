@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { buildComponentTree } from './parser.js';
+const { buildComponentTree } = require('./parser.js');
 import { DisposableOptions, FiltersObject, TreeObject } from '../types';
 
-export function activate(context: vscode.ExtensionContext) {
+function activate(context: vscode.ExtensionContext) {
   console.log('Reactive TypeScript extension actived');
   const renderReact = vscode.commands.registerCommand('reactive.renderReact', async () => {
     const options: DisposableOptions = {
@@ -32,12 +32,12 @@ export function activate(context: vscode.ExtensionContext) {
           vscode.ViewColumn.One,
           {
             enableScripts: true,
-            localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'dist'))]
+            localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'out'))]
           }
         );
 
         const webviewJsPath = vscode.Uri.file(
-          path.join(context.extensionPath, 'dist', 'webview.js')
+          path.join(context.extensionPath, 'out/webview', 'webview.js')
         );
         const webviewJsUri = panel.webview.asWebviewUri(webviewJsPath);
 
@@ -96,4 +96,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
 }
 
-export function deactivate() {}
+function deactivate() {}
+
+exports.activate = activate;
+exports.deactivate = deactivate;

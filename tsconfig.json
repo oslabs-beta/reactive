@@ -16,7 +16,7 @@
   },
   "include": [
     "src/**/*",
-    "src/server.extension.ts",
+    "src/server/extension.ts",
   ],
   "exclude": [
     "node_modules",

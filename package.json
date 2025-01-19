@@ -31,8 +31,11 @@
     "client component",
     "rsc"
   ],
-  "activationEvents": [],
-  "main": "./src/server/extension.js",
+  "activationEvents": [
+  "onStartupFinished",
+  "onCommand:reactive.renderReact"
+  ],
+  "main": "./out/server/extension.js",
   "contributes": {
     "commands": [
       {
