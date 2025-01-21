@@ -1,6 +1,7 @@
 # Contributing to Reactive 🚀
 
 First off, thank you for considering contributing to Reactive! We're excited to have you join our community.
+* ps Remember to ask us to assign you the issue#, so that we dont have multiple people working on the same ticket/issue
 
 ## Quick Links
 
