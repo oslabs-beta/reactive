@@ -7,15 +7,13 @@ module.exports = [
     target: 'node',
     entry: './out/server/extension.js',
     output: {
-      path: path.resolve(__dirname, 'out'), 
+      path: path.resolve(__dirname, 'out/server'), 
       filename: 'extension.js',
       libraryTarget: 'commonjs2',
       clean: true
     },
     externals: {
       vscode: 'commonjs vscode',
-      '@babel/parser': 'commonjs @babel/parser',
-      '@babel/traverse': 'commonjs @babel/traverse'
     },
     resolve: {
       extensions: ['.js', '.ts'],
