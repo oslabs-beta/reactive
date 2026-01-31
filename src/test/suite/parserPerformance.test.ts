@@ -227,4 +227,76 @@ export const ${componentName} = {
         traverse(tree);
         return stats;
     }
+
+    /**
+     * Test that circular dependencies don't cause stack overflow
+     *
+     * ComponentA imports ComponentB
+     * ComponentB imports ComponentA (circular!)
+     */
+    test('Handle circular dependencies without stack overflow', function() {
+        this.timeout(5000);
+        const tmpDir = path.join(__dirname, 'temp_circular_test');
+
+        try {
+            fs.mkdirSync(tmpDir, { recursive: true });
+
+            // Create ComponentA that imports ComponentB
+            const componentA = `
+import React, { useState } from 'react';
+import ComponentB from './ComponentB';
+
+const ComponentA = () => {
+    const [value, setValue] = useState(null);
+    return <div><ComponentB /></div>;
+};
+
+export default ComponentA;`;
+
+            // Create ComponentB that imports ComponentA (circular!)
+            const componentB = `
+import React, { useState } from 'react';
+import ComponentA from './ComponentA';
+
+const ComponentB = () => {
+    const [data, setData] = useState(null);
+    return <div><ComponentA /></div>;
+};
+
+export default ComponentB;`;
+
+            fs.writeFileSync(path.join(tmpDir, 'ComponentA.tsx'), componentA);
+            fs.writeFileSync(path.join(tmpDir, 'ComponentB.tsx'), componentB);
+
+            const rootPath = path.join(tmpDir, 'ComponentA.tsx');
+
+            console.log('\n🔄 Testing circular dependency handling...');
+
+            // This should NOT throw a stack overflow error
+            const tree = buildComponentTree(rootPath, tmpDir);
+
+            console.log('✅ Circular dependency handled without crash!');
+
+            // Validate the tree was built (with circular ref skipped)
+            assert.ok(tree, 'Tree should be built despite circular dependency');
+            assert.equal(tree.file, 'ComponentA.tsx', 'Root should be ComponentA');
+            assert.equal(tree.type, 'functional', 'ComponentA should be functional');
+            assert.ok(tree.children.length > 0, 'Should have children');
+
+            // ComponentB should be a child, but ComponentA should NOT appear again as grandchild
+            const componentB_child = tree.children[0];
+            assert.equal(componentB_child.file, 'ComponentB.tsx', 'Child should be ComponentB');
+
+            // The circular reference back to ComponentA should be null/filtered out
+            const hasCircularChild = componentB_child.children.some(
+                (child: any) => child && child.file === 'ComponentA.tsx'
+            );
+            assert.ok(!hasCircularChild, 'Circular reference should be skipped');
+
+            console.log('✅ Circular dependency test passed!\n');
+
+        } finally {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
+    });
 });
