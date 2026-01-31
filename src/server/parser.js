@@ -91,7 +91,7 @@ function findImportsInAST(ast) {
 }
 
 // Build a component tree from the file system and source code
-function buildComponentTree(filePath, baseDir) {
+function buildComponentTree(filePath, baseDir, visited = new Set()) {
   /* DEBUG LOGGING GUIDE
    * To enable full debug logging, uncomment the console.log statements below
    * Logging levels:
@@ -101,6 +101,13 @@ function buildComponentTree(filePath, baseDir) {
    */
 
   const absoluteFilePath = path.resolve(baseDir, filePath);
+
+  // Prevent circular dependencies causing stack overflow
+  if (visited.has(absoluteFilePath)) {
+    return null;
+  }
+  visited.add(absoluteFilePath);
+
   // LEVEL 3: Process Start
   // console.log('\n=== Starting buildComponentTree ===');
   // console.log('Checking file:', absoluteFilePath);
@@ -149,7 +156,7 @@ function buildComponentTree(filePath, baseDir) {
         return null;
       }
 
-      return buildComponentTree(resolvedPath, baseDir);
+      return buildComponentTree(resolvedPath, baseDir, visited);
     })
     .filter(Boolean);
 
