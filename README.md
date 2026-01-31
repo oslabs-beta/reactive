@@ -70,6 +70,10 @@ npm run dev
 - Report bugs
 - Review code
 
+### Notes
+Note: `npm test` may fail on macOS arm64. Verify parser manually:
+node -e "const {buildComponentTree} = require('./src/server/parser.js'); ..."
+
 ### Getting Started
 - **First Time Contributors**: Check out our [First-Time Contributors Guide](CONTRIBUTING.md#new-to-open-source)
 - **Ready to Code**: See our [Contribution Guidelines](CONTRIBUTING.md#experienced-contributor-guide)
