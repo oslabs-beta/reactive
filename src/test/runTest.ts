@@ -17,8 +17,7 @@ async function main() {
 
         await runTests({
             extensionDevelopmentPath,
-            extensionTestsPath,
-            launchArgs: ['--user-data-dir', userDataDir]
+            extensionTestsPath
         });
     } catch (err) {
         console.error('Failed to run tests:', err);

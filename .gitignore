@@ -2,3 +2,6 @@ node_modules
 .vscode-test/
 *.vsix
 out
+
+# Private dev notes (not tracked)
+.dev/
