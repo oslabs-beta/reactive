@@ -34,7 +34,7 @@ https://www.youtube.com/watch?v=pF-JJ7jmMp4
 
 ## Features
 
-- **Component Tree Visualization**: Procure a clear, hierarchical view of your React component structure.
+- **Component Tree Visualization**: Provides a clear, hierarchical view of your React component structure.
 - **Component Type Differentiation**: Easily distinguish between functional and class components.
 - **Language Identification**: Quickly identify TypeScript and JavaScript components.
 - **Full App Structure**: Visualize the entire structure of your React application.
@@ -58,8 +58,8 @@ git clone https://github.com/your-username/reactive.git
 # Install dependencies
 npm install
 
-# Start development environment
-npm run dev
+# Watch mode for automatic rebuilds
+npm run watch
 ```
 
 ### Ways to Contribute
@@ -151,13 +151,13 @@ npm run package
   - Help > Toggle Developer Tools
 
 ### Common Issues
-- If the extension bla bla bla:
+- If the extension fails to load or shows errors:
   1. Stop the extension
-  2. Run ``
+  2. Run `npm run build`
   3. Restart debugging (`F5`)
-- If webview bla bla bla:
-  1. Run Command ? (`Ctrl+Shift+P`)
-  2. Execute "bla bla bla"
+- If the webview is blank or not rendering:
+  1. Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+  2. Execute "Developer: Reload Window"
   
 ### Development Scripts Guide
 For detailed information about the npm scripts available in the project, their purposes, and when to use them during development, please refer to the [Development Scripts Guide](DEVELOPMENT_SCRIPTS.md).
@@ -196,7 +196,7 @@ reactive/
 ## Documentation
 
 - [Contributing Guidelines](CONTRIBUTING.md)
-- [VS Code Development Guide](VS_CODE_DEVELOPMENT.md)
+- [VS Code Development Guide](VS_DEVELOPMENT.md)
 - [Changelog](CHANGELOG.md)
 - [License](LICENSE.md)
 

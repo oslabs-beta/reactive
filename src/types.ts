@@ -14,7 +14,9 @@ export type FiltersObject = {
 
 export type TreeObject = {
     file: string;
-    children: TreeObject;
+    children: TreeObject[];
+    type: 'functional' | 'class' | null;
+    state: string[];
 };
 
 //REATIVE/src/types.ts
