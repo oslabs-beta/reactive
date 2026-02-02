@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import * as path from 'path';
 const { buildComponentTree } = require('./parser.js');
-import { DisposableOptions, FiltersObject, TreeObject } from '../types';
+import { DisposableOptions, TreeObject } from '../types';
 
 function activate(context: vscode.ExtensionContext) {
   console.log('Reactive TypeScript extension actived');
@@ -73,12 +72,11 @@ function activate(context: vscode.ExtensionContext) {
       <html lang="en">
       <head>
           <meta charset="UTF-8">
-          <meta compName="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Component Tree: ${compName}</title>
       </head>
       <body>
         <div id="root"></div>
-        <script src="https://d3js.org/d3.v7.min.js"></script>
         <script>
           const vscode = acquireVsCodeApi();
           window.onload = () => {
